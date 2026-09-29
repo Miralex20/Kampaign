@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: Lint · Typecheck · Test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: campaign
+          POSTGRES_PASSWORD: campaign_dev
+          POSTGRES_DB: campaign_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://campaign:campaign_dev@localhost:5432/campaign_db
+      DATABASE_TEST_URL: postgres://campaign:campaign_dev@localhost:5432/campaign_test_db
+      REDIS_URL: redis://localhost:6379
+      APP_BASE_URL: http://localhost:3000
+      LINK_BASE_URL: http://localhost:3000
+      LISTMONK_BASE_URL: http://localhost:9000
+      LISTMONK_API_USER: api_user
+      LISTMONK_API_TOKEN: test_token
+      LISTMONK_TX_TEMPLATE_ID: "1"
+      LISTMONK_DISPATCH_CONCURRENCY: "5"
+      # 32-byte test key — NOT a real production key
+      TOKEN_ENCRYPTION_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+      AUTH_SECRET: "test_auth_secret_for_ci_only"
+      EMAIL_WEBHOOK_SECRET: "test_webhook_secret"
+      NEW_ORG_DAILY_CAP: "500"
+      LOG_LEVEL: "warn"
+      NODE_ENV: "test"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Enable citext + pgcrypto extensions
+        run: |
+          psql "postgres://campaign:campaign_dev@localhost:5432/campaign_db" \
+            -c "CREATE EXTENSION IF NOT EXISTS citext; CREATE EXTENSION IF NOT EXISTS pgcrypto;"
+          psql "postgres://campaign:campaign_dev@localhost:5432/campaign_db" \
+            -c "CREATE DATABASE campaign_test_db;" || true
+          psql "postgres://campaign:campaign_dev@localhost:5432/campaign_test_db" \
+            -c "CREATE EXTENSION IF NOT EXISTS citext; CREATE EXTENSION IF NOT EXISTS pgcrypto;"
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test:unit
+
+      - name: Run DB migrations (for integration tests)
+        run: pnpm --filter @campaign/db db:migrate
+        continue-on-error: true  # Migrations not yet generated in M0; will pass from M1 onward
+
+      - name: Integration tests
+        run: pnpm test:integration
+        continue-on-error: true  # No integration tests in M0; will pass from M1 onward

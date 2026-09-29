@@ -1,0 +1,357 @@
+<html><head><style>body {
+   color: black;
+}
+</style></head><body><h1 id="how-we-achieved-aws-cloudfront-video-streaming-a-step-by-step-technical-guide">How We Achieved AWS CloudFront Video Streaming: A Step-by-Step Technical Guide</h1>
+<p><strong>Document Purpose:</strong> Complete technical narrative and recreation guide documenting how AWS CloudFront edge streaming was architected, diagnosed, built, and verified for TeamManager video courses.</p>
+<hr>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol>
+<li><a href="#1-project-objectives--background">Project Objectives &amp; Background</a></li>
+<li><a href="#2-initial-problem--root-cause-diagnosis">Initial Problem &amp; Root Cause Diagnosis</a><ul>
+<li><a href="#the-original-302-redirect-flow">The Original 302 Redirect Flow</a></li>
+<li><a href="#why-the-browser-video-element-failed">Why the Browser <code>&lt;video&gt;</code> Element Failed</a></li>
+</ul>
+</li>
+<li><a href="#3-the-new-architecture-asynchronous-json-pre-fetch">The New Architecture: Asynchronous JSON Pre-Fetch</a></li>
+<li><a href="#4-step-by-step-aws-setup">Step-by-Step AWS Setup</a><ul>
+<li><a href="#step-41-generating-the-rsa-2048-bit-key-pair">Step 4.1: Generating the RSA 2048-bit Key Pair</a></li>
+<li><a href="#step-42-configuring-cloudfront-public-key--key-group">Step 4.2: Configuring CloudFront Public Key &amp; Key Group</a></li>
+<li><a href="#step-43-creating-the-cloudfront-distribution">Step 4.3: Creating the CloudFront Distribution</a></li>
+<li><a href="#step-44-why-s3-bucket-policies-remained-untouched">Step 4.4: Why S3 Bucket Policies Remained Untouched</a></li>
+</ul>
+</li>
+<li><a href="#5-backend-implementation-walkthrough">Backend Implementation Walkthrough</a><ul>
+<li><a href="#51-settings--environment-configuration">5.1: Settings &amp; Environment Configuration</a></li>
+<li><a href="#52-cryptographic-url-signer-cloudfront_signerpy">5.2: Cryptographic URL Signer (<code>cloudfront_signer.py</code>)</a></li>
+<li><a href="#53-json-stream-url-api-view-classstreamurlview">5.3: JSON Stream URL API View (<code>ClassStreamUrlView</code>)</a></li>
+<li><a href="#54-url-routing">5.4: URL Routing</a></li>
+<li><a href="#55-backward-compatibility-preservation">5.5: Backward Compatibility Preservation</a></li>
+</ul>
+</li>
+<li><a href="#6-frontend-video-player-walkthrough">Frontend Video Player Walkthrough</a><ul>
+<li><a href="#61-pre-fetching-signed-urls-on-active-class-change">6.1: Pre-Fetching Signed URLs on Active Class Change</a></li>
+<li><a href="#62-mounting-direct-cloudfront-url-to-video-src">6.2: Mounting Direct CloudFront URL to <code>&lt;video src&gt;</code></a></li>
+<li><a href="#63-ui-loading--buffering-states">6.3: UI Loading &amp; Buffering States</a></li>
+</ul>
+</li>
+<li><a href="#7-testing--verification-methodology">Testing &amp; Verification Methodology</a><ul>
+<li><a href="#71-verification-of-s3-object-existence">7.1: Verification of S3 Object Existence</a></li>
+<li><a href="#72-verification-of-cryptographic-url-signing">7.2: Verification of Cryptographic URL Signing</a></li>
+<li><a href="#73-command-line-cloudfront-edge-range-request-test">7.3: Command-Line CloudFront Edge Range Request Test</a></li>
+<li><a href="#74-end-to-end-automated-test-script">7.4: End-to-End Automated Test Script</a></li>
+<li><a href="#75-full-course-purchase--browser-playback-test">7.5: Full Course Purchase &amp; Browser Playback Test</a></li>
+</ul>
+</li>
+<li><a href="#8-production-deployment-blueprint">Production Deployment Blueprint</a></li>
+</ol>
+<hr>
+<h2 id="1-project-objectives-background">1. Project Objectives &amp; Background</h2>
+<p>TeamManager includes a Digital Products marketplace where instructors and organizations can publish and sell video-based training courses. </p>
+<h3 id="core-engineering-requirements-">Core Engineering Requirements:</h3>
+<ol>
+<li><strong>Low Latency &amp; High Bandwidth Playback</strong>: Videos can be large (100MB+ per class). Streaming them directly through Django workers consumes server connections and leads to buffering.</li>
+<li><strong>Smooth Scrubbing &amp; Seeking</strong>: Users must be able to seek through 1080p/4K video with zero perceptible lag.</li>
+<li><strong>Strict Access Control</strong>: Only students who have purchased the course or enrolled in a free product should be able to watch the classes.</li>
+<li><strong>Sequential Viewing Enforcement</strong>: If an instructor enables sequential viewing, class $N$ cannot be viewed until class $N-1$ is completed.</li>
+<li><strong>No S3 Egress Bills / Zero Disruptions</strong>: Existing direct S3 uploads for documents, invoices, PDFs, and avatars must not be broken or altered.</li>
+</ol>
+<p>AWS CloudFront was selected as the Edge CDN layer to cache media at edge locations worldwide, using <strong>CloudFront Signed URLs</strong> for access control.</p>
+<hr>
+<h2 id="2-initial-problem-root-cause-diagnosis">2. Initial Problem &amp; Root Cause Diagnosis</h2>
+<h3 id="the-original-302-redirect-flow">The Original 302 Redirect Flow</h3>
+<p>Initially, the video player in <code>CoursePlayerPage.jsx</code> set the video source to Django&#39;s streaming view:</p>
+<pre><code class="lang-html">&lt;<span class="hljs-selector-tag">video</span> src=<span class="hljs-string">"http://api.teammanager.com/api/digital-products/courses/4/classes/4/stream/?token=&lt;JWT&gt;"</span> /&gt;
+</code></pre>
+<p>When the browser requested this URL, Django&#39;s <code>ClassVideoStreamView</code>:</p>
+<ol>
+<li>Authenticated the student via the JWT query parameter (<code>QueryParamJWTAuthentication</code>).</li>
+<li>Verified the student had purchased the course.</li>
+<li>Generated a CloudFront signed URL: <code>https://d13xjfi0ctxoet.cloudfront.net/media/courses/video.mp4?Expires=...&amp;Signature=...</code></li>
+<li>Returned an HTTP redirect:<pre><code class="lang-http">HTTP/<span class="hljs-number">1.1</span> <span class="hljs-number">302</span> Found
+<span class="hljs-string">Location:</span> <span class="hljs-string">https:</span><span class="hljs-comment">//d13xjfi0ctxoet.cloudfront.net/media/courses/video.mp4?Expires=...&amp;Signature=...</span>
+</code></pre>
+</li>
+</ol>
+<h2 id="3-the-new-architecture-asynchronous-json-pre-fetch">3. The New Architecture: Asynchronous JSON Pre-Fetch</h2>
+<p>To eliminate cross-origin 302 redirects, we migrated to the industry-standard architecture used by major streaming platforms (e.g. YouTube, Vimeo):</p>
+<ol>
+<li><strong>Asynchronous Signed URL Acquisition</strong>: The frontend makes an authenticated JSON call to <code>/stream-url/</code>.</li>
+<li><strong>Direct Edge CDN Mount</strong>: The frontend receives the signed URL string and sets it directly as <code>&lt;video src=&quot;...&quot;&gt;</code>.</li>
+<li><strong>Clean Edge Streaming</strong>: The browser requests byte ranges directly from AWS CloudFront edge PoPs. Zero redirects occur.</li>
+</ol>
+<pre><code class="lang-mermaid">sequenceDiagram
+    autonumber
+    actor User <span class="hljs-keyword">as</span> Student
+    participant FE <span class="hljs-keyword">as</span> React Frontend (CoursePlayerPage)
+    participant API <span class="hljs-keyword">as</span> Django Backend (ClassStreamUrlView)
+    participant CF <span class="hljs-keyword">as</span> CloudFront CDN (Edge PoP)
+    participant S3 <span class="hljs-keyword">as</span> AWS S3 Private Bucket
+
+    User-&gt;&gt;<span class="hljs-string">FE:</span> Selects Class to Watch
+    FE-&gt;&gt;<span class="hljs-string">API:</span> GET <span class="hljs-regexp">/api/</span>digital-products<span class="hljs-regexp">/courses/</span><span class="hljs-number">4</span><span class="hljs-regexp">/classes/</span><span class="hljs-number">4</span><span class="hljs-regexp">/stream-url/</span> (<span class="hljs-string">Authorization:</span> Bearer &lt;JWT&gt;)
+    Note over <span class="hljs-string">API:</span> <span class="hljs-number">1.</span> Validate JWT&lt;br<span class="hljs-regexp">/&gt;2. Check Enrollment &amp; Sequential Rules&lt;br/</span>&gt;<span class="hljs-number">3.</span> Cryptographically Sign URL (RSA-SHA1)
+    API--&gt;&gt;<span class="hljs-string">FE:</span> HTTP <span class="hljs-number">200</span>: {<span class="hljs-string">"url"</span>: <span class="hljs-string">"https://d13...cloudfront.net/media/video.mp4?Expires=...&amp;Signature=..."</span>}
+    FE-&gt;&gt;<span class="hljs-string">FE:</span> Set <span class="hljs-string">state:</span> &lt;video src=<span class="hljs-string">"https://d13...cloudfront.net/..."</span>&gt;
+    User-&gt;&gt;<span class="hljs-string">CF:</span> GET <span class="hljs-regexp">/media/</span>video.mp4 (<span class="hljs-string">Range:</span> bytes=<span class="hljs-number">0</span><span class="hljs-number">-1048575</span>)
+    alt Cached at Edge
+        CF--&gt;&gt;<span class="hljs-string">User:</span> HTTP <span class="hljs-number">206</span> Partial Content (Instant Stream)
+    <span class="hljs-keyword">else</span> Cache Miss
+        CF-&gt;&gt;<span class="hljs-string">S3:</span> GET <span class="hljs-regexp">/media/</span>video.mp4 (Internal AWS Backbone)
+        S3--&gt;&gt;<span class="hljs-string">CF:</span> File Bytes
+        CF--&gt;&gt;<span class="hljs-string">User:</span> HTTP <span class="hljs-number">206</span> Partial Content (Caches Chunk at Edge)
+    end
+</code></pre>
+<hr>
+<h2 id="4-step-by-step-aws-setup">4. Step-by-Step AWS Setup</h2>
+<p>Here is the exact step-by-step procedure used to set up AWS CloudFront:</p>
+<h3 id="step-4-1-generating-the-rsa-2048-bit-key-pair">Step 4.1: Generating the RSA 2048-bit Key Pair</h3>
+<p>CloudFront requires an RSA 2048-bit key pair for URL signing.</p>
+<pre><code class="lang-bash"><span class="hljs-comment"># 1. Generate RSA private key</span>
+openssl genrsa -out <span class="hljs-keyword">cloudfront_private_key.pem </span><span class="hljs-number">2048</span>
+
+<span class="hljs-comment"># 2. Extract public key</span>
+openssl rsa -pubout -in <span class="hljs-keyword">cloudfront_private_key.pem </span>-out <span class="hljs-keyword">cloudfront_public_key.pem
+</span>
+<span class="hljs-comment"># 3. Base64-encode private key into a single line (ideal for container env vars)</span>
+<span class="hljs-keyword">base64 </span>-w <span class="hljs-number">0</span> <span class="hljs-keyword">cloudfront_private_key.pem </span>&gt; <span class="hljs-keyword">cloudfront_private_key.base64.txt</span>
+</code></pre>
+<h3 id="step-4-2-configuring-cloudfront-public-key-key-group">Step 4.2: Configuring CloudFront Public Key &amp; Key Group</h3>
+<ol>
+<li>In the <strong>AWS Management Console</strong>, navigate to <strong>CloudFront</strong> → <strong>Key management</strong> → <strong>Public keys</strong>.</li>
+<li>Click <strong>Create public key</strong>.<ul>
+<li><strong>Name</strong>: <code>teammanager-video-key</code></li>
+<li><strong>Key value</strong>: Pasted the full text of <code>cloudfront_public_key.pem</code>.</li>
+<li>Clicked <strong>Create public key</strong>.</li>
+<li><strong>Recorded the Key ID</strong>: (e.g., <code>K3ABC123EXAMPLE</code>).</li>
+</ul>
+</li>
+<li>Navigated to <strong>Key management</strong> → <strong>Key groups</strong>.</li>
+<li>Click <strong>Create key group</strong>.<ul>
+<li><strong>Name</strong>: <code>teammanager-video-key-group</code></li>
+<li><strong>Public keys</strong>: Selected <code>teammanager-video-key</code>.</li>
+<li>Clicked <strong>Create key group</strong>.</li>
+</ul>
+</li>
+</ol>
+<h3 id="step-4-3-creating-the-cloudfront-distribution">Step 4.3: Creating the CloudFront Distribution</h3>
+<ol>
+<li>Navigated to <strong>Distributions</strong> → <strong>Create distribution</strong>.</li>
+<li><strong>Origin Settings</strong>:<ul>
+<li><strong>Origin domain</strong>: Selected the existing S3 bucket (<code>teammanager-media.s3.eu-west-1.amazonaws.com</code>).</li>
+<li><strong>Origin path</strong>: Left blank.</li>
+<li><strong>Origin access</strong>: Kept standard/public access (since S3 policies were already established).</li>
+</ul>
+</li>
+<li><strong>Default Cache Behavior</strong>:<ul>
+<li><strong>Viewer protocol policy</strong>: <code>Redirect HTTP to HTTPS</code>.</li>
+<li><strong>Allowed HTTP methods</strong>: <code>GET, HEAD, OPTIONS</code>.</li>
+<li><strong>Restrict viewer access</strong>: <code>Yes</code>.</li>
+<li><strong>Trusted authorization type</strong>: <code>Trusted key groups</code>.</li>
+<li><strong>Key group</strong>: Selected <code>teammanager-video-key-group</code>.</li>
+<li><strong>Cache policy</strong>: Selected <strong><code>Managed-CachingOptimized</code></strong>.<blockquote>
+<p><strong>Why <code>Managed-CachingOptimized</code> is critical</strong>: This policy natively passes and respects HTTP <code>Range</code> headers, enabling the CloudFront edge to cache byte chunks and serve HTTP 206 Partial Content responses without refetching the entire file from S3.</p>
+</blockquote>
+</li>
+<li><strong>Origin request policy</strong>: Selected <code>Managed-CORS-S3Origin</code>.</li>
+<li><strong>Response headers policy</strong>: Selected <code>Managed-CORS-and-SecurityHeadersPolicy</code>.</li>
+</ul>
+</li>
+<li>Clicked <strong>Create distribution</strong>.</li>
+<li>Once the distribution state changed to <strong>Enabled</strong>, recorded the domain name: <code>d13xjfi0ctxoet.cloudfront.net</code>.</li>
+</ol>
+<h3 id="step-4-4-why-s3-bucket-policies-remained-untouched">Step 4.4: Why S3 Bucket Policies Remained Untouched</h3>
+<p>A major requirement was to avoid disturbing existing storage workflows:</p>
+<ul>
+<li>Documents, invoices, images, and user avatars continue uploading directly to S3 via <code>SafeS3Boto3Storage</code>.</li>
+<li>CloudFront simply reads from the bucket via AWS&#39;s internal network backbone.</li>
+<li>No public bucket policies were opened or modified.</li>
+</ul>
+<hr>
+<h2 id="5-backend-implementation-walkthrough">5. Backend Implementation Walkthrough</h2>
+<h3 id="5-1-settings-environment-configuration">5.1: Settings &amp; Environment Configuration</h3>
+<p>In <code>backend/config/settings/base.py</code>, added environment-driven configuration:</p>
+<pre><code class="lang-python"><span class="hljs-attr">ENABLE_CLOUDFRONT_STREAMING</span> = env.bool(<span class="hljs-string">'ENABLE_CLOUDFRONT_STREAMING'</span>, default=<span class="hljs-literal">False</span>)
+<span class="hljs-attr">CLOUDFRONT_DOMAIN</span> = env(<span class="hljs-string">'CLOUDFRONT_DOMAIN'</span>, default=<span class="hljs-string">''</span>)
+<span class="hljs-attr">CLOUDFRONT_KEY_ID</span> = env(<span class="hljs-string">'CLOUDFRONT_KEY_ID'</span>, default=<span class="hljs-string">''</span>)
+<span class="hljs-attr">CLOUDFRONT_PRIVATE_KEY_PATH</span> = env(<span class="hljs-string">'CLOUDFRONT_PRIVATE_KEY_PATH'</span>, default=<span class="hljs-string">''</span>)
+<span class="hljs-attr">CLOUDFRONT_PRIVATE_KEY_BASE64</span> = env(<span class="hljs-string">'CLOUDFRONT_PRIVATE_KEY_BASE64'</span>, default=<span class="hljs-string">''</span>)
+<span class="hljs-attr">CLOUDFRONT_PRIVATE_KEY_PEM</span> = env(<span class="hljs-string">'CLOUDFRONT_PRIVATE_KEY_PEM'</span>, default=<span class="hljs-string">''</span>)
+<span class="hljs-attr">CLOUDFRONT_MEDIA_PREFIX</span> = env(<span class="hljs-string">'CLOUDFRONT_MEDIA_PREFIX'</span>, default=<span class="hljs-string">'media'</span>)
+<span class="hljs-attr">CLOUDFRONT_URL_EXPIRATION_SECONDS</span> = env.int(<span class="hljs-string">'CLOUDFRONT_URL_EXPIRATION_SECONDS'</span>, default=<span class="hljs-number">7200</span>)
+</code></pre>
+<p>In <code>backend/.gitignore</code>, ensured keys cannot be accidentally committed:</p>
+<pre><code class="lang-gitignore">keys/
+<span class="hljs-comment">*.pem</span>
+</code></pre>
+<h3 id="5-2-cryptographic-url-signer-cloudfront_signer-py-">5.2: Cryptographic URL Signer (<code>cloudfront_signer.py</code>)</h3>
+<p>Created <code>backend/digital_products/cloudfront_signer.py</code>. Key features:</p>
+<ul>
+<li>Uses <code>cryptography</code> and <code>botocore.signers.CloudFrontSigner</code> with RSA-SHA1 signing.</li>
+<li><strong>Flexible Private Key Loading</strong>: Loads from base64 string, PEM string, or disk path.</li>
+<li>Handles media path prefixes cleanly (e.g. <code>media/digital_products/courses/...</code>).</li>
+<li>Sets configurable expiration timestamps (default 2 hours).</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">generate_signed_video_url</span><span class="hljs-params">(file_name_or_url: str, expires_in_seconds: int = None)</span> -&gt; str:</span>
+    domain = getattr(settings, <span class="hljs-string">'CLOUDFRONT_DOMAIN'</span>, <span class="hljs-string">''</span>).strip().rstrip(<span class="hljs-string">'/'</span>)
+    key_id = getattr(settings, <span class="hljs-string">'CLOUDFRONT_KEY_ID'</span>, <span class="hljs-string">''</span>).strip()
+    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> domain <span class="hljs-keyword">or</span> <span class="hljs-keyword">not</span> key_id:
+        <span class="hljs-keyword">raise</span> ValueError(<span class="hljs-string">"CLOUDFRONT_DOMAIN and CLOUDFRONT_KEY_ID must be configured."</span>)
+
+    <span class="hljs-keyword">if</span> expires_in_seconds <span class="hljs-keyword">is</span> <span class="hljs-keyword">None</span>:
+        expires_in_seconds = getattr(settings, <span class="hljs-string">'CLOUDFRONT_URL_EXPIRATION_SECONDS'</span>, <span class="hljs-number">7200</span>)
+
+    clean_path = file_name_or_url.lstrip(<span class="hljs-string">'/'</span>)
+    prefix = getattr(settings, <span class="hljs-string">'CLOUDFRONT_MEDIA_PREFIX'</span>, <span class="hljs-string">'media'</span>)
+    <span class="hljs-keyword">if</span> prefix:
+        prefix = prefix.strip(<span class="hljs-string">'/'</span>)
+        <span class="hljs-keyword">if</span> prefix <span class="hljs-keyword">and</span> <span class="hljs-keyword">not</span> clean_path.startswith(f<span class="hljs-string">"{prefix}/"</span>):
+            clean_path = f<span class="hljs-string">"{prefix}/{clean_path}"</span>
+
+    resource_url = f<span class="hljs-string">"https://{domain}/{clean_path}"</span>
+    signer = CloudFrontSigner(key_id, _rsa_signer)
+    expire_time = timezone.now() + datetime.timedelta(seconds=expires_in_seconds)
+
+    <span class="hljs-keyword">return</span> signer.generate_presigned_url(resource_url, date_less_than=expire_time)
+</code></pre>
+<h3 id="5-3-json-stream-url-api-view-classstreamurlview-">5.3: JSON Stream URL API View (<code>ClassStreamUrlView</code>)</h3>
+<p>Added <code>ClassStreamUrlView</code> in <code>backend/digital_products/views.py</code>:</p>
+<ul>
+<li>Authenticates via JWT (<code>QueryParamJWTAuthentication</code> or <code>Authorization: Bearer &lt;token&gt;</code>).</li>
+<li>Validates student enrollment and sequential completion rules (<code>can_access_class</code>).</li>
+<li>Returns JSON payload <code>{&quot;url&quot;: &quot;&lt;signed_cloudfront_url&gt;&quot;}</code>.</li>
+<li>Gracefully falls back to storage backend URL if CloudFront is disabled or fails.</li>
+</ul>
+<h3 id="5-4-url-routing">5.4: URL Routing</h3>
+<p>Registered in <code>backend/digital_products/urls.py</code>:</p>
+<pre><code class="lang-python">path(<span class="hljs-string">'courses/&lt;int:course_id&gt;/classes/&lt;int:class_id&gt;/stream-url/'</span>,
+     views<span class="hljs-selector-class">.ClassStreamUrlView</span><span class="hljs-selector-class">.as_view</span>(),
+     name=<span class="hljs-string">'dp-class-stream-url'</span>),
+</code></pre>
+<h3 id="5-5-backward-compatibility-preservation">5.5: Backward Compatibility Preservation</h3>
+<p>The legacy <code>ClassVideoStreamView</code> (<code>.../stream/</code>) was kept untouched. Clients that still call the redirect URL or run in environments without CloudFront continue to work seamlessly.</p>
+<hr>
+<h2 id="6-frontend-video-player-walkthrough">6. Frontend Video Player Walkthrough</h2>
+<p>In <code>frontend/src/pages/modules/CoursePlayerPage.jsx</code>:</p>
+<h3 id="6-1-pre-fetching-signed-urls-on-active-class-change">6.1: Pre-Fetching Signed URLs on Active Class Change</h3>
+<pre><code class="lang-javascript"><span class="hljs-regexp">//</span> Stream URL cache mapped <span class="hljs-keyword">by</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">ID</span></span>
+const [streamUrls, setStreamUrls] = useState({})
+const [loadingStreamUrl, setLoadingStreamUrl] = useState(<span class="hljs-literal">false</span>)
+
+useEffect(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> {
+  <span class="hljs-keyword">if</span> (!courseId || !activeClassId || !activeClass?.stream_url) <span class="hljs-keyword">return</span>
+  <span class="hljs-keyword">if</span> (streamUrls[activeClassId]) <span class="hljs-keyword">return</span> <span class="hljs-regexp">//</span> Already cached
+
+  let cancelled = <span class="hljs-literal">false</span>
+  setLoadingStreamUrl(<span class="hljs-literal">true</span>)
+
+  api.get(`<span class="javascript">/api/digital-products/courses/${courseId}/classes/${activeClassId}/stream-url/</span>`)
+    .<span class="hljs-keyword">then</span>(<span class="hljs-function"><span class="hljs-params">(data)</span> =&gt;</span> {
+      <span class="hljs-keyword">if</span> (!cancelled &amp;&amp; data?.url) {
+        setStreamUrls(<span class="hljs-function"><span class="hljs-params">(prev)</span> =&gt;</span> ({ ...prev, [activeClassId]: data.url }))
+      }
+    })
+    .<span class="hljs-keyword">catch</span>(<span class="hljs-function"><span class="hljs-params">(err)</span> =&gt;</span> {
+      <span class="hljs-built_in">console</span>.warn(<span class="hljs-string">'stream-url fetch failed, falling back to legacy redirect:'</span>, err)
+    })
+    .<span class="hljs-keyword">finally</span>(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> {
+      <span class="hljs-keyword">if</span> (!cancelled) setLoadingStreamUrl(<span class="hljs-literal">false</span>)
+    })
+
+  <span class="hljs-keyword">return</span> () =&gt; { cancelled = <span class="hljs-literal">true</span> }
+}, [courseId, activeClassId, activeClass?.stream_url])
+</code></pre>
+<h3 id="6-2-mounting-direct-cloudfront-url-to-video-src-">6.2: Mounting Direct CloudFront URL to <code>&lt;video src&gt;</code></h3>
+<pre><code class="lang-jsx"><span class="hljs-tag">&lt;<span class="hljs-name">video</span>
+  <span class="hljs-attr">ref</span>=<span class="hljs-string">{videoRef}</span>
+  <span class="hljs-attr">key</span>=<span class="hljs-string">{activeClass.id}</span>
+  <span class="hljs-attr">src</span>=<span class="hljs-string">{</span>
+    <span class="hljs-attr">activeClass.stream_url</span>
+      // <span class="hljs-attr">1.</span> <span class="hljs-attr">Direct</span> <span class="hljs-attr">CloudFront</span> <span class="hljs-attr">signed</span> <span class="hljs-attr">URL</span> (<span class="hljs-attr">no</span> <span class="hljs-attr">redirect</span> = <span class="hljs-string">no</span> <span class="hljs-attr">CORS</span> <span class="hljs-attr">failure</span>)
+      ? (<span class="hljs-attr">streamUrls</span>[<span class="hljs-attr">activeClass.id</span>] || <span class="hljs-attr">withStreamAuth</span>(<span class="hljs-attr">resolveUrl</span>(<span class="hljs-attr">activeClass.stream_url</span>)))
+      // <span class="hljs-attr">2.</span> <span class="hljs-attr">Direct</span> <span class="hljs-attr">storage</span> <span class="hljs-attr">URL</span> (<span class="hljs-attr">fallback</span>)
+      <span class="hljs-attr">:</span> <span class="hljs-attr">resolveUrl</span>(<span class="hljs-attr">activeClass.video_file</span>)
+  }
+  <span class="hljs-attr">controls</span>
+  <span class="hljs-attr">controlsList</span>=<span class="hljs-string">{course?.allow_download</span> ? <span class="hljs-attr">undefined</span> <span class="hljs-attr">:</span> '<span class="hljs-attr">nodownload</span>'}
+  <span class="hljs-attr">preload</span>=<span class="hljs-string">"metadata"</span>
+  <span class="hljs-attr">playsInline</span>
+  <span class="hljs-attr">className</span>=<span class="hljs-string">"w-full h-full aspect-video"</span>
+/&gt;</span>
+</code></pre>
+<h3 id="6-3-ui-loading-buffering-states">6.3: UI Loading &amp; Buffering States</h3>
+<p>Added subtle loading overlays (&quot;Preparing stream...&quot; and &quot;Buffering stream...&quot;) with spinners while the signed URL is fetched or during network transitions.</p>
+<hr>
+<h2 id="7-testing-verification-methodology">7. Testing &amp; Verification Methodology</h2>
+<p>Every layer was verified using structured tests:</p>
+<h3 id="7-1-verification-of-s3-object-existence">7.1: Verification of S3 Object Existence</h3>
+<p>Using <code>boto3</code>, confirmed that uploaded course video objects (e.g., 100.4 MB) were uploaded to the bucket with correct permissions:</p>
+<pre><code class="lang-python">s3 = boto3.client('s3')
+res = s3.head<span class="hljs-emphasis">_object(Bucket='teammanager-media', Key='media/digital_</span>products/courses/test.mp4')
+assert res[<span class="hljs-string">'ResponseMetadata'</span>][<span class="hljs-symbol">'HTTPStatusCode'</span>] == 200
+</code></pre>
+<h3 id="7-2-verification-of-cryptographic-url-signing">7.2: Verification of Cryptographic URL Signing</h3>
+<p>Executed a standalone Django shell test ensuring the signature components were present:</p>
+<pre><code class="lang-python"><span class="hljs-keyword">from</span> digital_products.cloudfront_signer <span class="hljs-keyword">import</span> generate_signed_video_url
+url = generate_signed_video_url(<span class="hljs-string">'digital_products/courses/test.mp4'</span>)
+<span class="hljs-built_in">assert</span> <span class="hljs-string">'Expires='</span> <span class="hljs-keyword">in</span> url
+<span class="hljs-built_in">assert</span> <span class="hljs-string">'Signature='</span> <span class="hljs-keyword">in</span> url
+<span class="hljs-built_in">assert</span> <span class="hljs-string">'Key-Pair-Id='</span> <span class="hljs-keyword">in</span> url
+</code></pre>
+<h3 id="7-3-command-line-cloudfront-edge-range-request-test">7.3: Command-Line CloudFront Edge Range Request Test</h3>
+<p>Tested partial content delivery directly from CloudFront:</p>
+<pre><code class="lang-bash">curl -<span class="hljs-keyword">I</span> -H <span class="hljs-string">"Range: bytes=0-1024"</span> <span class="hljs-string">"&lt;signed-url&gt;"</span>
+</code></pre>
+<p><strong>Output Received:</strong></p>
+<pre><code class="lang-http">HTTP/2 <span class="hljs-number">206</span> Partial Content
+<span class="hljs-attribute">content-type</span>: video/mp4
+<span class="hljs-attribute">content-length</span>: 1025
+<span class="hljs-attribute">content-range</span>: bytes 0-1024/105342120
+<span class="hljs-attribute">accept-ranges</span>: bytes
+<span class="hljs-attribute">x-cache</span>: Hit from cloudfront
+</code></pre>
+<p>This confirmed that CloudFront was caching and serving partial byte slices without querying S3 for the full file.</p>
+<h3 id="7-4-end-to-end-automated-test-script">7.4: End-to-End Automated Test Script</h3>
+<p>Created <code>backend/scripts/test_stream_url_endpoint.py</code>:</p>
+<ul>
+<li>Authenticates a student via <code>/api/accounts/token/</code>.</li>
+<li>Retrieves enrolled courses via <code>/api/digital-products/my-courses/</code>.</li>
+<li>Calls <code>GET /api/digital-products/courses/{id}/classes/{id}/stream-url/</code>.</li>
+<li>Validates the response status <code>200</code> and structure <code>{&quot;url&quot;: &quot;https://...&quot;}</code>.</li>
+<li>Verifies that accessing the endpoint without authentication returns <code>401 Unauthorized</code>.</li>
+<li>Verifies that accessing an unpurchased course returns <code>403 Forbidden</code>.</li>
+</ul>
+<h3 id="7-5-full-course-purchase-browser-playback-test">7.5: Full Course Purchase &amp; Browser Playback Test</h3>
+<ol>
+<li>Student navigated to a course product in the catalog.</li>
+<li>Checked out via free enrollment (<code>order.status = &#39;completed&#39;</code>).</li>
+<li>Clicked &quot;Watch Course&quot; navigating to <code>/app/courses/{productId}/player</code>.</li>
+<li>Browser DevTools Network tab confirmed:<ul>
+<li><code>GET /api/.../stream-url/</code> → returned CloudFront signed URL (<code>200 OK</code>).</li>
+<li><code>&lt;video&gt;</code> element immediately connected to CloudFront.</li>
+<li>Initial byte range <code>0-</code> received <code>206 Partial Content</code>.</li>
+<li>Rapid timeline scrubbing resulted in immediate playback without stalling.</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="8-production-deployment-blueprint">8. Production Deployment Blueprint</h2>
+<p>When deploying to production:</p>
+<ol>
+<li><strong>Generate and Save Keys</strong>:
+Generate 2048-bit RSA keys using OpenSSL. Save <code>CLOUDFRONT_PRIVATE_KEY_BASE64</code> in your secrets manager.</li>
+<li><strong>AWS CloudFront Setup</strong>:
+Create Public Key, Key Group, and Distribution pointing to the production S3 bucket with <code>Managed-CachingOptimized</code> cache policy.</li>
+<li><strong>Set Production Environment Variables</strong>:<pre><code class="lang-ini"><span class="hljs-attr">ENABLE_CLOUDFRONT_STREAMING</span>=<span class="hljs-literal">True</span>
+<span class="hljs-attr">CLOUDFRONT_DOMAIN</span>=&lt;distribution-domain&gt;.cloudfront.net
+<span class="hljs-attr">CLOUDFRONT_KEY_ID</span>=&lt;public-key-id&gt;
+<span class="hljs-attr">CLOUDFRONT_PRIVATE_KEY_BASE64</span>=&lt;<span class="hljs-literal">on</span>e-line-base64-string&gt;
+<span class="hljs-attr">CLOUDFRONT_MEDIA_PREFIX</span>=media
+<span class="hljs-attr">CLOUDFRONT_URL_EXPIRATION_SECONDS</span>=<span class="hljs-number">7200</span>
+</code></pre>
+</li>
+<li><strong>Deploy Code &amp; Restart</strong>:
+Deploy backend and frontend services.</li>
+<li><strong>Rollback Plan</strong>:
+If needed, set <code>ENABLE_CLOUDFRONT_STREAMING=False</code> and restart workers to immediately fall back to direct S3 streaming.</li>
+</ol>
+</body></html>

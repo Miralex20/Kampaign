@@ -1,0 +1,32 @@
+{
+  "name": "@campaign/db",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema/index.ts",
+    "./migrations": "./src/migrations/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run --config vitest.unit.config.ts",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx --env-file=../../.env src/migrate.ts",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "drizzle-orm": "0.44.2",
+    "pg": "8.16.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.21",
+    "@types/pg": "8.11.14",
+    "drizzle-kit": "0.31.1",
+    "tsx": "4.19.4",
+    "vitest": "3.2.4"
+  }
+}

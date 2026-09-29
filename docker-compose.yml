@@ -1,0 +1,132 @@
+# ---------------------------------------------------------------------------
+# Local development stack
+#
+# Services:
+#   postgres  — Postgres 16 on port 5432
+#   pgbouncer — Connection pooler on port 5433 (app connects here)
+#   redis     — Redis 7 on port 6379
+#   listmonk  — Email campaign engine on port 9000
+#   mailpit   — SMTP sink + web UI: SMTP 1025, HTTP 8025
+# ---------------------------------------------------------------------------
+
+services:
+  # --------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: campaign
+      POSTGRES_PASSWORD: campaign_dev
+      POSTGRES_DB: campaign_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U campaign -d campaign_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # --------------------------------------------------------------------------
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    restart: unless-stopped
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: campaign
+      DB_PASSWORD: campaign_dev
+      DB_NAME: campaign_db
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 100
+      DEFAULT_POOL_SIZE: 20
+      AUTH_TYPE: any
+    ports:
+      - "5433:5432"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # --------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --save "" --appendonly no
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # --------------------------------------------------------------------------
+  # listmonk requires a Postgres database.
+  # It will create its own tables in a separate 'listmonk' database.
+  listmonk:
+    image: listmonk/listmonk:latest
+    restart: unless-stopped
+    # Use a shell entrypoint so we can run --install first
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        ./listmonk --install --idempotent --yes
+        ./listmonk
+    environment:
+      LISTMONK_app__address: "0.0.0.0:9000"
+      LISTMONK_db__host: postgres
+      LISTMONK_db__port: 5432
+      LISTMONK_db__user: campaign
+      LISTMONK_db__password: campaign_dev
+      LISTMONK_db__database: listmonk_db
+    ports:
+      - "9000:9000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - listmonk_data:/listmonk/uploads
+
+  # --------------------------------------------------------------------------
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+    environment:
+      MP_MAX_MESSAGES: 500
+      MP_SMTP_AUTH_ACCEPT_ANY: "true"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "true"
+
+  # --------------------------------------------------------------------------
+  # Campaign Web Application
+  # --------------------------------------------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://campaign:campaign_dev@postgres:5432/campaign_db
+      REDIS_URL: redis://redis:6379
+      APP_BASE_URL: http://localhost:3000
+      LINK_BASE_URL: http://localhost:3000
+      LISTMONK_BASE_URL: http://listmonk:9000
+      AUTH_SECRET: ${AUTH_SECRET:-e839e9f9c738e4a9e229f3458c97103a8904df9043e74c82b130df930c239023}
+      TOKEN_ENCRYPTION_KEY: ${TOKEN_ENCRYPTION_KEY:-eWVhaHRoaXNpc2F0ZXN0MzJieXRla2V5MTIzNDU2Nzg5MDE=}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  listmonk_data:
+

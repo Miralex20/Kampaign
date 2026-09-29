@@ -1,0 +1,8 @@
+node_modules
+.next
+.git
+.pgdata
+test.mp4
+*.log
+.env.local
+.env*.local

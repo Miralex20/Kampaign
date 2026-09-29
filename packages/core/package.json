@@ -1,0 +1,33 @@
+{
+  "name": "@campaign/core",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    "./tokens": "./tokens/index.ts",
+    "./render": "./render/index.ts",
+    "./csv": "./csv/index.ts",
+    "./listmonk": "./listmonk/index.ts",
+    "./tracking": "./tracking/index.ts",
+    "./suppression": "./suppression/index.ts",
+    "./sanitise": "./sanitise/index.ts",
+    "./otp": "./otp/index.ts",
+    "./screening": "./screening/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "papaparse": "5.5.3",
+    "zod": "3.24.4"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.21",
+    "@types/papaparse": "5.3.15",
+    "vitest": "3.2.4"
+  }
+}
