@@ -8,3 +8,5 @@ build
 *.tsbuildinfo
 .DS_Store
 coverage
+.pgdata
+test.mp4
