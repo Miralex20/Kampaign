@@ -12,37 +12,39 @@ export default function SignInPage() {
         <style>{`
           * { box-sizing: border-box; margin: 0; padding: 0; }
           body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #0f172a;
-            color: #f8fafc;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 24px;
           }
           .card {
-            background: #1e293b;
-            border: 1px solid #334155;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
             border-radius: 12px;
             padding: 2rem;
             width: 100%;
             max-width: 400px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
           }
-          h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
-          p { color: #94a3b8; margin-bottom: 1.5rem; font-size: 0.9rem; }
-          label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.4rem; }
+          h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.5rem; color: #0f172a; }
+          p { color: #64748b; margin-bottom: 1.5rem; font-size: 0.9rem; line-height: 1.5; }
+          label { display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 0.4rem; }
           input {
-            width: 100%; padding: 0.75rem; border-radius: 6px;
-            border: 1px solid #475569; background: #0f172a; color: #f8fafc;
-            font-size: 1rem; margin-bottom: 1rem;
+            width: 100%; padding: 0.65rem 0.85rem; border-radius: 6px;
+            border: 1px solid #cbd5e1; background: #ffffff; color: #0f172a;
+            font-size: 0.95rem; margin-bottom: 1.2rem;
           }
-          input:focus { outline: 2px solid #6366f1; border-color: #6366f1; }
+          input:focus { outline: 2px solid #4f46e5; border-color: #4f46e5; }
           button {
             width: 100%; padding: 0.75rem; border-radius: 6px;
-            background: #6366f1; color: white; font-size: 1rem;
+            background: #4f46e5; color: white; font-size: 0.95rem;
             border: none; cursor: pointer; font-weight: 600;
           }
-          button:hover { background: #4f46e5; }
+          button:hover { background: #4338ca; }
         `}</style>
       </head>
       <body>

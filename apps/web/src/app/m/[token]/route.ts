@@ -107,11 +107,53 @@ const SECURITY_HEADERS = {
 // Page templates
 // ---------------------------------------------------------------------------
 function invalidPage(): string {
-  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Page Not Found</title></head><body><h1>This link is not valid.</h1></body></html>`;
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Link Not Valid — Campaign Messaging</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #f8fafc; color: #0f172a; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 36px; max-width: 440px; width: 100%; box-shadow: 0 1px 3px rgba(0,0,0,0.05); text-align: center; }
+    h1 { font-size: 20px; font-weight: 700; margin: 0 0 8px 0; color: #0f172a; }
+    p { font-size: 14px; color: #64748b; line-height: 1.5; margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div style="font-size: 32px; margin-bottom: 12px;">🔒</div>
+    <h1>Link Not Valid</h1>
+    <p>This message link could not be verified or has been removed.</p>
+  </div>
+</body>
+</html>`;
 }
 
 function expiredPage(): string {
-  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Link Expired</title></head><body><h1>This link has expired.</h1></body></html>`;
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Link Expired — Campaign Messaging</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #f8fafc; color: #0f172a; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 36px; max-width: 440px; width: 100%; box-shadow: 0 1px 3px rgba(0,0,0,0.05); text-align: center; }
+    h1 { font-size: 20px; font-weight: 700; margin: 0 0 8px 0; color: #0f172a; }
+    p { font-size: 14px; color: #64748b; line-height: 1.5; margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div style="font-size: 32px; margin-bottom: 12px;">⏳</div>
+    <h1>Link Expired</h1>
+    <p>This confidential message link has expired.</p>
+  </div>
+</body>
+</html>`;
 }
 
 interface LandingPageProps {
@@ -161,26 +203,26 @@ function landingPage({
   if (allowReplies) {
     if (isBroadcast && campaignId) {
       replyForm = `
-<div style="max-width: 600px; margin: 40px auto 20px auto; padding: 24px; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05); font-family: system-ui, -apple-system, sans-serif;">
-  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-    <span style="font-size: 20px;">💬</span>
-    <h3 style="margin: 0; font-size: 17px; font-weight: 600; color: #1e293b;">Reply to this message</h3>
+<div style="max-width: 680px; margin: 24px auto 40px auto; padding: 24px 32px; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-family: system-ui, -apple-system, sans-serif;">
+  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+    <span style="font-size: 18px;">💬</span>
+    <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a;">Reply to this message</h3>
   </div>
   <p style="margin: 0 0 16px 0; font-size: 13px; color: #64748b;">
-    This is a public message link. Please include your name and email so the creator knows who replied.
+    This is a public message link. Please include your name and email so the sender can follow up with you.
   </p>
   <form id="campaign-reply-form" onsubmit="handleUniversalReply(event)" style="display: flex; flex-direction: column; gap: 12px;">
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-      <input id="reply-name" type="text" placeholder="Your Full Name" required style="padding: 10px 12px; font-size: 14px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none;" />
-      <input id="reply-email" type="email" placeholder="Your Email Address" required style="padding: 10px 12px; font-size: 14px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none;" />
+      <input id="reply-name" type="text" placeholder="Your Name" required style="padding: 9px 12px; font-size: 14px; border: 1px solid #cbd5e1; border-radius: 6px; color: #0f172a; outline: none;" />
+      <input id="reply-email" type="email" placeholder="Your Email Address" required style="padding: 9px 12px; font-size: 14px; border: 1px solid #cbd5e1; border-radius: 6px; color: #0f172a; outline: none;" />
     </div>
-    <textarea id="reply-body" placeholder="Write your response to the sender..." required rows="3" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 14px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; resize: vertical;"></textarea>
+    <textarea id="reply-body" placeholder="Write your response to the sender..." required rows="3" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 14px; border: 1px solid #cbd5e1; border-radius: 6px; color: #0f172a; outline: none; resize: vertical;"></textarea>
     <div style="display: flex; justify-content: flex-end;">
-      <button id="reply-btn" type="submit" style="background: #4f46e5; color: #ffffff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer;">
+      <button id="reply-btn" type="submit" style="background: #4f46e5; color: #ffffff; border: none; padding: 9px 20px; border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer;">
         Send Reply →
       </button>
     </div>
-    <div id="reply-status" style="display: none; padding: 10px; border-radius: 6px; font-size: 13px; margin-top: 4px;"></div>
+    <div id="reply-status" style="display: none; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-top: 4px;"></div>
   </form>
 </div>
 <script>
@@ -204,6 +246,7 @@ async function handleUniversalReply(e) {
     if (res.ok) {
       statusDiv.style.display = 'block';
       statusDiv.style.background = '#ecfdf5';
+      statusDiv.style.border = '1px solid #a7f3d0';
       statusDiv.style.color = '#065f46';
       statusDiv.innerText = '✓ Your reply has been delivered to the sender!';
       document.getElementById('reply-body').value = '';
@@ -214,6 +257,7 @@ async function handleUniversalReply(e) {
   } catch(err) {
     statusDiv.style.display = 'block';
     statusDiv.style.background = '#fef2f2';
+    statusDiv.style.border = '1px solid #fecaca';
     statusDiv.style.color = '#991b1b';
     statusDiv.innerText = err.message || 'Error sending reply. Please try again.';
     btn.disabled = false;
@@ -224,22 +268,22 @@ async function handleUniversalReply(e) {
 `;
     } else if (messageId) {
       replyForm = `
-<div style="max-width: 600px; margin: 40px auto 20px auto; padding: 24px; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05); font-family: system-ui, -apple-system, sans-serif;">
-  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-    <span style="font-size: 20px;">💬</span>
-    <h3 style="margin: 0; font-size: 17px; font-weight: 600; color: #1e293b;">Reply privately to the sender</h3>
+<div style="max-width: 680px; margin: 24px auto 40px auto; padding: 24px 32px; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-family: system-ui, -apple-system, sans-serif;">
+  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+    <span style="font-size: 18px;">💬</span>
+    <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a;">Reply privately to the sender</h3>
   </div>
   <p style="margin: 0 0 16px 0; font-size: 13px; color: #64748b;">
     Your response will be delivered directly and securely to the campaign owner.
   </p>
   <form id="campaign-reply-form" onsubmit="handlePersonalReply(event)" style="display: flex; flex-direction: column; gap: 12px;">
-    <textarea id="reply-body" placeholder="Write your reply here..." required rows="3" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 14px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; resize: vertical;"></textarea>
+    <textarea id="reply-body" placeholder="Write your reply here..." required rows="3" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 14px; border: 1px solid #cbd5e1; border-radius: 6px; color: #0f172a; outline: none; resize: vertical;"></textarea>
     <div style="display: flex; justify-content: flex-end;">
-      <button id="reply-btn" type="submit" style="background: #4f46e5; color: #ffffff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer;">
+      <button id="reply-btn" type="submit" style="background: #4f46e5; color: #ffffff; border: none; padding: 9px 20px; border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer;">
         Send Reply →
       </button>
     </div>
-    <div id="reply-status" style="display: none; padding: 10px; border-radius: 6px; font-size: 13px; margin-top: 4px;"></div>
+    <div id="reply-status" style="display: none; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-top: 4px;"></div>
   </form>
 </div>
 <script>
@@ -261,6 +305,7 @@ async function handlePersonalReply(e) {
     if (res.ok) {
       statusDiv.style.display = 'block';
       statusDiv.style.background = '#ecfdf5';
+      statusDiv.style.border = '1px solid #a7f3d0';
       statusDiv.style.color = '#065f46';
       statusDiv.innerText = '✓ Your reply has been sent safely!';
       document.getElementById('reply-body').value = '';
@@ -271,6 +316,7 @@ async function handlePersonalReply(e) {
   } catch(err) {
     statusDiv.style.display = 'block';
     statusDiv.style.background = '#fef2f2';
+    statusDiv.style.border = '1px solid #fecaca';
     statusDiv.style.color = '#991b1b';
     statusDiv.innerText = err.message || 'Error sending reply. Please try again.';
     btn.disabled = false;
@@ -282,7 +328,7 @@ async function handlePersonalReply(e) {
     }
   }
 
-  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Your Message</title></head><body style="margin: 0; background-color: #f8fafc;">${content}${replyForm}${beacon}</body></html>`;
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Your Message</title></head><body style="margin: 0; background-color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; padding: 24px 16px;">${content}${replyForm}${beacon}</body></html>`;
 }
 
 // ---------------------------------------------------------------------------

@@ -116,7 +116,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     "Unsubscribed Successfully",
     `Your email (<strong>${recipient.email}</strong>) has been removed. You will not receive any further communications from this sender.`,
     `<div style="margin-top: 24px; text-align: center;">
-      <span style="display: inline-block; background: #064e3b; color: #6ee7b7; padding: 6px 16px; border-radius: 6px; font-size: 13px; font-weight: 600;">
+      <span style="display: inline-block; background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 6px 16px; border-radius: 6px; font-size: 13px; font-weight: 600;">
         ✓ Preference Saved
       </span>
     </div>`,
@@ -138,9 +138,9 @@ function renderCard(title: string, bodyText: string, actionHtml: string | null):
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #090d16;
-      color: #f3f4f6;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -148,20 +148,20 @@ function renderCard(title: string, bodyText: string, actionHtml: string | null):
       padding: 24px;
     }
     .card {
-      background: #111827;
-      border: 1px solid #1f2937;
-      border-radius: 16px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
       padding: 36px;
       width: 100%;
       max-width: 460px;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1 style="font-size: 20px; font-weight: 700; margin-bottom: 10px; color: #ffffff;">${title}</h1>
-    <p style="font-size: 14px; color: #9ca3af; line-height: 1.6;">${bodyText}</p>
+    <h1 style="font-size: 20px; font-weight: 700; margin-bottom: 10px; color: #0f172a;">${title}</h1>
+    <p style="font-size: 14px; color: #64748b; line-height: 1.6;">${bodyText}</p>
     ${actionHtml ?? ""}
   </div>
 </body>

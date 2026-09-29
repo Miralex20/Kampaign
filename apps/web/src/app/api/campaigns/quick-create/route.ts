@@ -157,20 +157,20 @@ export async function POST(request: Request): Promise<NextResponse> {
   `.trim();
 
   const defaultLandingPageHtml = `
-<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 680px; margin: 40px auto; background: #111827; border: 1px solid #1f2937; border-radius: 16px; padding: 40px; color: #f9fafb; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);">
-  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 24px;">
-    <div style="width: 12px; height: 12px; border-radius: 50%; background: #10b981; box-shadow: 0 0 10px #10b981;"></div>
-    <span style="font-size: 12px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Verified Private Page for {{first_name}}</span>
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 680px; margin: 40px auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 40px; color: #0f172a; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);">
+  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+    <div style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></div>
+    <span style="font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Confidential Message for {{first_name}}</span>
   </div>
 
-  <h1 style="font-size: 28px; font-weight: 800; margin: 0 0 16px 0; color: #ffffff;">Welcome, {{first_name}}!</h1>
+  <h1 style="font-size: 24px; font-weight: 700; margin: 0 0 16px 0; color: #0f172a;">Welcome, {{first_name}}!</h1>
 
-  <div style="background: #1f2937; border-left: 4px solid #6366f1; padding: 20px; border-radius: 8px; margin: 24px 0; font-size: 17px; line-height: 1.6; color: #e5e7eb;">
+  <div style="background: #f8fafc; border-left: 3px solid #4f46e5; padding: 18px; border-radius: 6px; margin: 20px 0; font-size: 16px; line-height: 1.6; color: #334155;">
     {{custom_message}}
   </div>
 
-  <p style="color: #9ca3af; line-height: 1.6; font-size: 15px;">
-    This interactive page was tailored specifically for <strong>{{email}}</strong>.
+  <p style="color: #64748b; line-height: 1.6; font-size: 14px; margin: 20px 0 0 0;">
+    Recipient: <strong>{{email}}</strong> · Profile: <strong>{{sex|Direct Member}}</strong>
   </p>
 </div>
   `.trim();

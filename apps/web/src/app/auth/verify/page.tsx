@@ -7,16 +7,18 @@ export default function VerifyPage() {
         <style>{`
           * { box-sizing: border-box; margin: 0; padding: 0; }
           body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #0f172a; color: #f8fafc;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc; color: #0f172a;
             min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            padding: 24px;
           }
           .card {
-            background: #1e293b; border: 1px solid #334155;
+            background: #ffffff; border: 1px solid #e2e8f0;
             border-radius: 12px; padding: 2rem; max-width: 400px; text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
           }
-          h1 { font-size: 1.5rem; margin-bottom: 0.75rem; }
-          p { color: #94a3b8; line-height: 1.6; }
+          h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.75rem; color: #0f172a; }
+          p { color: #64748b; line-height: 1.6; font-size: 0.95rem; }
           .icon { font-size: 2.5rem; margin-bottom: 1rem; }
         `}</style>
       </head>

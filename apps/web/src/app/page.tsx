@@ -65,8 +65,8 @@ export default async function HomePage() {
     <div
       style={{
         minHeight: "100vh",
-        backgroundColor: "#090d16",
-        color: "#f3f4f6",
+        backgroundColor: "#f8fafc",
+        color: "#0f172a",
         fontFamily:
           "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
         padding: "32px 24px",
@@ -79,7 +79,7 @@ export default async function HomePage() {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            borderBottom: "1px solid #1f2937",
+            borderBottom: "1px solid #e2e8f0",
             paddingBottom: "24px",
             marginBottom: "32px",
             flexWrap: "wrap",
@@ -90,44 +90,42 @@ export default async function HomePage() {
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <div
                 style={{
-                  width: "12px",
-                  height: "12px",
+                  width: "10px",
+                  height: "10px",
                   borderRadius: "50%",
                   background: "#10b981",
-                  boxShadow: "0 0 12px #10b981",
                 }}
               />
               <h1
                 style={{
                   margin: 0,
-                  fontSize: "24px",
-                  fontWeight: "800",
-                  letterSpacing: "-0.5px",
-                  background: "linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
+                  fontSize: "22px",
+                  fontWeight: "700",
+                  letterSpacing: "-0.3px",
+                  color: "#0f172a",
                 }}
               >
                 Campaign Messaging Platform
               </h1>
             </div>
-            <p style={{ margin: "4px 0 0 22px", color: "#9ca3af", fontSize: "14px" }}>
-              1-on-1 Personalized Email Engine · Private Interactive Landing Pages · Zero-Bot Security
+            <p style={{ margin: "4px 0 0 20px", color: "#64748b", fontSize: "14px" }}>
+              Personalized direct messaging, tokenized web landing pages, and verified email delivery
             </p>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <Link
               href="/api/health"
               target="_blank"
               style={{
                 fontSize: "13px",
-                padding: "6px 12px",
+                fontWeight: "500",
+                padding: "7px 12px",
                 borderRadius: "6px",
-                background: "#1f2937",
-                color: "#e5e7eb",
+                background: "#ffffff",
+                color: "#334155",
                 textDecoration: "none",
-                border: "1px solid #374151",
+                border: "1px solid #cbd5e1",
               }}
             >
               Health Check API
@@ -137,12 +135,13 @@ export default async function HomePage() {
               target="_blank"
               style={{
                 fontSize: "13px",
-                padding: "6px 12px",
+                fontWeight: "500",
+                padding: "7px 12px",
                 borderRadius: "6px",
-                background: "#1f2937",
-                color: "#e5e7eb",
+                background: "#ffffff",
+                color: "#334155",
                 textDecoration: "none",
-                border: "1px solid #374151",
+                border: "1px solid #cbd5e1",
               }}
             >
               Prometheus Metrics
@@ -152,15 +151,15 @@ export default async function HomePage() {
               <span
                 style={{
                   fontSize: "13px",
-                  padding: "6px 14px",
+                  padding: "7px 12px",
                   borderRadius: "6px",
-                  background: "#064e3b",
-                  color: "#6ee7b7",
-                  border: "1px solid #047857",
+                  background: "#ecfdf5",
+                  color: "#047857",
+                  border: "1px solid #a7f3d0",
                   fontWeight: "500",
                 }}
               >
-                ✓ Logged in as {session.user.email}
+                ✓ {session.user.email}
               </span>
             ) : (
               <a
@@ -168,12 +167,11 @@ export default async function HomePage() {
                 style={{
                   fontSize: "13px",
                   fontWeight: "600",
-                  padding: "8px 16px",
+                  padding: "7px 14px",
                   borderRadius: "6px",
-                  background: "#2563eb",
+                  background: "#4f46e5",
                   color: "#ffffff",
                   textDecoration: "none",
-                  boxShadow: "0 4px 12px rgba(37, 99, 235, 0.3)",
                 }}
               >
                 1-Click Admin Session →
