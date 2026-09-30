@@ -89,6 +89,7 @@ describe("Authentication & Password Recovery Actions", () => {
         .limit(1);
 
       expect(created).toBeDefined();
+      if (!created) throw new Error("User was not created");
       expect(created.name).toBe("Tester Jane");
       expect(created.role).toBe("owner");
       expect(created.password_hash).toBeDefined();
@@ -104,6 +105,7 @@ describe("Authentication & Password Recovery Actions", () => {
         .limit(1);
 
       expect(org).toBeDefined();
+      if (!org) throw new Error("Org was not created");
       expect(org.name).toBe("Alpha Beta Labs");
     });
 
@@ -136,6 +138,7 @@ describe("Authentication & Password Recovery Actions", () => {
         .limit(1);
 
       expect(tokenRow).toBeDefined();
+      if (!tokenRow) throw new Error("Token was not found in DB");
       expect(tokenRow.token).toBeDefined();
       expect(tokenRow.expires.getTime()).toBeGreaterThan(Date.now());
 
@@ -189,6 +192,7 @@ describe("Authentication & Password Recovery Actions", () => {
         .limit(1);
 
       expect(tokenRow).toBeDefined();
+      if (!tokenRow) throw new Error("Token was not found in DB");
 
       const formData = new FormData();
       formData.set("token", tokenRow.token);
@@ -214,6 +218,9 @@ describe("Authentication & Password Recovery Actions", () => {
         .from(users)
         .where(eq(users.email, testEmail))
         .limit(1);
+
+      expect(updated).toBeDefined();
+      if (!updated) throw new Error("Updated user was not found");
 
       const matchesNew = await bcrypt.compare("BrandNewPassword999!", updated.password_hash!);
       expect(matchesNew).toBe(true);

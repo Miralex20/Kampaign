@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 
 interface CampaignItem {
   id: string;
@@ -1482,22 +1483,31 @@ ${landingContent}
               </div>
             )}
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setShowDomainModal(false)}
-                className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50"
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+              <Link
+                href="/domain"
+                className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
               >
-                Close
-              </button>
-              <button
-                type="button"
-                disabled={verifyingDomain}
-                onClick={handleVerifyDomain}
-                className="px-4 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700"
-              >
-                {verifyingDomain ? "Querying DNS..." : "Check DNS Records Now"}
-              </button>
+                <span>Open Full Domain Manager</span>
+                <span>→</span>
+              </Link>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowDomainModal(false)}
+                  className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  disabled={verifyingDomain}
+                  onClick={handleVerifyDomain}
+                  className="px-4 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {verifyingDomain ? "Querying DNS..." : "Check DNS Records Now"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

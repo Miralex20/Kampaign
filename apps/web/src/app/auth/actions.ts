@@ -28,7 +28,9 @@ export async function signUpAction(
   const name = (formData.get("name") as string)?.trim();
   const orgName = (formData.get("orgName") as string)?.trim();
   const email = (formData.get("email") as string)?.trim().toLowerCase();
+  const rawDomain = (formData.get("sendingDomain") as string)?.trim().toLowerCase();
   const password = formData.get("password") as string;
+  const confirmPassword = formData.get("confirmPassword") as string;
 
   if (!name || name.length < 2) {
     return { error: "Please enter your full name (at least 2 characters)." };
@@ -42,6 +44,14 @@ export async function signUpAction(
   if (!password || password.length < 8) {
     return { error: "Password must be at least 8 characters long." };
   }
+  if (confirmPassword && password !== confirmPassword) {
+    return { error: "Passwords do not match. Please re-enter your password." };
+  }
+
+  // Derive sending domain from input or email domain
+  let sendingDomain = rawDomain
+    ? rawDomain.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^@/, "").trim()
+    : email.split("@")[1];
 
   const db = getDb();
 
@@ -60,11 +70,12 @@ export async function signUpAction(
 
   try {
     await db.transaction(async (tx) => {
-      // 1. Create Organization
+      // 1. Create Organization with sending domain
       const [org] = await tx
         .insert(organizations)
         .values({
           name: orgName,
+          sending_domain: sendingDomain,
           review_state: "pending",
           plan: "trial",
           daily_cap: 500,

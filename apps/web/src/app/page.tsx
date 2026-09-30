@@ -107,6 +107,14 @@ export default async function HomePage() {
           {session?.user ? (
             <>
               <Link
+                href="/domain"
+                className="text-xs font-medium px-3 py-1.5 rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors inline-flex items-center gap-1.5"
+              >
+                <span>🌐</span>
+                <span className="hidden sm:inline">Domain</span>
+              </Link>
+
+              <Link
                 href="/team"
                 className="text-xs font-medium px-3 py-1.5 rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors inline-flex items-center gap-1.5"
               >
