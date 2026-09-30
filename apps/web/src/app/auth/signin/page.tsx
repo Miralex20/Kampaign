@@ -1,10 +1,29 @@
-import { signIn } from "@/auth";
+import { Suspense } from "react";
+import { auth, signIn } from "@/auth";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { SignInForm } from "./SignInForm";
 
-export default function SignInPage() {
-  async function handleSignIn(formData: FormData) {
+export default async function SignInPage() {
+  const session = await auth();
+  if (session?.user) {
+    redirect("/");
+  }
+
+  async function handleGoogleSignIn() {
     "use server";
-    await signIn("nodemailer", formData);
+    await signIn("google", {
+      redirectTo: "/",
+    });
+  }
+
+  async function handleMagicLinkSignIn(formData: FormData) {
+    "use server";
+    const email = formData.get("email") as string;
+    await signIn("nodemailer", {
+      email,
+      redirectTo: "/",
+    });
   }
 
   return (
@@ -27,41 +46,15 @@ export default function SignInPage() {
         <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
           <h1 className="text-xl font-bold text-slate-900 mb-1">Welcome back</h1>
           <p className="text-sm text-slate-500 mb-6">
-            Enter your business email. We'll send you a passwordless single-use magic link.
+            Choose your preferred sign-in method to continue.
           </p>
 
-          <form action={handleSignIn} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-                Business Email Address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="you@company.com"
-                required
-                autoFocus
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 text-sm transition"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-2.5 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition shadow-sm flex items-center justify-center gap-2"
-            >
-              <span>Send Magic Link</span>
-              <span>→</span>
-            </button>
-          </form>
-
-          {/* Helper / Security Notice */}
-          <div className="mt-6 pt-6 border-t border-slate-100 flex items-start gap-2.5 text-xs text-slate-500">
-            <span className="text-sm">🔒</span>
-            <p className="leading-relaxed m-0">
-              We use secure, passwordless authentication. A one-time sign-in link will be dispatched to your company inbox.
-            </p>
-          </div>
+          <Suspense fallback={<div className="py-6 text-center text-sm text-slate-400">Loading sign in options...</div>}>
+            <SignInForm
+              onGoogleSignIn={handleGoogleSignIn}
+              onMagicLinkSignIn={handleMagicLinkSignIn}
+            />
+          </Suspense>
         </div>
 
         {/* Back Link */}

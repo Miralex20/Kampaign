@@ -14,7 +14,10 @@
  */
 import NextAuth from "next-auth";
 import Nodemailer from "next-auth/providers/nodemailer";
-import { getDb } from "@campaign/db";
+import Google from "next-auth/providers/google";
+import Credentials from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
+import { getDb, auth_users } from "@campaign/db";
 import { organizations, users, type User, type Organization } from "@campaign/db/schema";
 import { eq } from "drizzle-orm";
 
@@ -42,6 +45,69 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(),
 
   providers: [
+    Google({
+      clientId: process.env["AUTH_GOOGLE_ID"] ?? "dummy-google-client-id",
+      clientSecret: process.env["AUTH_GOOGLE_SECRET"] ?? "dummy-google-client-secret",
+      allowDangerousEmailAccountLinking: true,
+    }),
+
+    Credentials({
+      id: "credentials",
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
+        const email = (credentials.email as string).trim().toLowerCase();
+        const password = credentials.password as string;
+
+        const db = getDb();
+        const [user] = await db
+          .select()
+          .from(users)
+          .where(eq(users.email, email))
+          .limit(1);
+
+        if (!user || !user.password_hash) {
+          return null;
+        }
+
+        const isValid = await bcrypt.compare(password, user.password_hash);
+        if (!isValid) {
+          return null;
+        }
+
+        // Look up or create auth_users row
+        let [authUser] = await db
+          .select()
+          .from(auth_users)
+          .where(eq(auth_users.email, email))
+          .limit(1);
+
+        if (!authUser) {
+          const [created] = await db
+            .insert(auth_users)
+            .values({
+              name: user.name,
+              email: user.email,
+              email_verified: new Date(),
+            })
+            .returning();
+          authUser = created;
+        }
+
+        return {
+          id: authUser ? authUser.id : user.id,
+          email: user.email,
+          name: user.name,
+        };
+      },
+    }),
+
     Nodemailer({
       server: {
         host: process.env["EMAIL_SERVER_HOST"] ?? "localhost",
@@ -102,10 +168,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
 
   callbacks: {
-    async session({ session, user }) {
+    async jwt({ token, user }) {
+      if (user) {
+        if (user.id) token.sub = user.id;
+        if (user.email) token.email = user.email;
+        if (user.name) token.name = user.name;
+      }
+      return token;
+    },
+
+    async session({ session, user, token }) {
       // Attach orgId, role, and permissions to the session for use in API handlers.
       const db = getDb();
-      const email = user.email ?? "";
+      const email = user?.email ?? (token?.["email"] as string | undefined) ?? session.user?.email ?? "";
+      if (!email) return session;
+
       const isSuper = isSuperadminEmail(email);
 
       const dbUser = await db
@@ -142,7 +219,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   events: {
     async createUser({ user: authUser }) {
       // First login: provision org and user row.
-      await provisionOrgAndUser(authUser.email ?? "");
+      await provisionOrgAndUser(authUser.email ?? "", authUser.name);
     },
   },
 
@@ -157,7 +234,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 // First-login provisioning
 // ---------------------------------------------------------------------------
 
-async function provisionOrgAndUser(email: string): Promise<void> {
+async function provisionOrgAndUser(email: string, name?: string | null): Promise<void> {
   const db = getDb();
   const isSuper = isSuperadminEmail(email);
 
@@ -199,6 +276,7 @@ async function provisionOrgAndUser(email: string): Promise<void> {
     await tx.insert(users).values({
       org_id: org.id,
       email,
+      name: name ?? null,
       role: isSuper ? "admin" : "owner",
       permissions: isSuper
         ? {

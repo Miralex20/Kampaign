@@ -128,6 +128,7 @@ export const users = pgTable("users", {
     .references(() => organizations.id, { onDelete: "cascade" }),
   email: text("email").notNull().unique(),
   name: text("name"),
+  password_hash: text("password_hash"),
   role: text("role").notNull().default("owner"),
   permissions: jsonb("permissions").notNull().default({}),
   status: text("status").notNull().default("active"),

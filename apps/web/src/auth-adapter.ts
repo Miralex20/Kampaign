@@ -17,6 +17,7 @@
  */
 
 import type { Adapter } from "next-auth/adapters";
+import { decode } from "next-auth/jwt";
 import { getDb } from "@campaign/db";
 import { auth_users, auth_sessions, auth_verification_tokens } from "@campaign/db";
 import { eq, and } from "drizzle-orm";
@@ -159,22 +160,59 @@ export function DrizzleAdapter(): Adapter {
         .innerJoin(auth_users, eq(auth_sessions.user_id, auth_users.id))
         .where(eq(auth_sessions.session_token, sessionToken))
         .limit(1);
-      if (!row) return null;
-      const { session, user } = row;
-      return {
-        session: {
-          userId: session.user_id,
-          sessionToken: session.session_token,
-          expires: session.expires,
-        },
-        user: {
-          id: user.id,
-          email: user.email,
-          emailVerified: user.email_verified,
-          name: user.name ?? null,
-          image: user.image ?? null,
-        },
-      };
+
+      if (row) {
+        const { session, user } = row;
+        return {
+          session: {
+            userId: session.user_id,
+            sessionToken: session.session_token,
+            expires: session.expires,
+          },
+          user: {
+            id: user.id,
+            email: user.email,
+            emailVerified: user.email_verified,
+            name: user.name ?? null,
+            image: user.image ?? null,
+          },
+        };
+      }
+
+      // Fallback for JWT session tokens (e.g. from Credentials provider)
+      try {
+        const secret = process.env["AUTH_SECRET"] ?? "dev-secret-change-in-production-min-32-chars";
+        const salt = "authjs.session-token";
+        const payload = await decode({ token: sessionToken, secret, salt });
+        if (payload?.email || payload?.sub) {
+          const userLookup = payload.email
+            ? await db.select().from(auth_users).where(eq(auth_users.email, payload.email as string)).limit(1)
+            : await db.select().from(auth_users).where(eq(auth_users.id, payload.sub as string)).limit(1);
+
+          const authUser = userLookup[0];
+          if (authUser) {
+            const exp = payload.exp ? new Date((payload.exp as number) * 1000) : new Date(Date.now() + 24 * 60 * 60 * 1000);
+            return {
+              session: {
+                userId: authUser.id,
+                sessionToken,
+                expires: exp,
+              },
+              user: {
+                id: authUser.id,
+                email: authUser.email,
+                emailVerified: authUser.email_verified,
+                name: authUser.name ?? null,
+                image: authUser.image ?? null,
+              },
+            };
+          }
+        }
+      } catch {
+        // Not a valid JWT token
+      }
+
+      return null;
     },
 
     async updateSession(data) {
