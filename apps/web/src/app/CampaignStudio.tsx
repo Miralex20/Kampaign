@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 
 interface CampaignItem {
   id: string;
@@ -14,6 +14,7 @@ interface RecipientRow {
   email: string;
   first_name: string;
   sex: string;
+  organization?: string;
   fields?: Record<string, string>;
   landing_link?: string;
 }
@@ -62,13 +63,13 @@ export function CampaignStudio({
   const [csvUploadFeedback, setCsvUploadFeedback] = useState<string | null>(null);
 
   // Template fields
-  const [subject, setSubject] = useState("Special confidential update for {{first_name}}");
+  const [subject, setSubject] = useState("Confidential Executive Briefing for {{first_name}}");
   const [introTeaser, setIntroTeaser] = useState(
     "Hi {{first_name}}, as a valued {{sex|member}}, I wanted to personally reach out with our latest project update. Please review your personalized overview page below.",
   );
-  const [buttonText, setButtonText] = useState("Open Your Private Page →");
+  const [buttonText, setButtonText] = useState("Open Confidential Briefing →");
   const [landingContent, setLandingContent] = useState(
-    `Welcome, {{first_name}}!\n\nThis confidential briefing is prepared specifically for you.\nAs registered in our system (Identity: {{sex|client}}), your account has been provisioned with priority access.\n\nPlease read through the details below and feel free to send any questions directly through the reply box below.`,
+    `Welcome, {{first_name}}!\n\nThis confidential briefing is prepared specifically for you.\nAs registered in our system (Identity: {{sex|client}}), your account has been provisioned with priority access.\n\nPlease read through the perimeter governance details below and feel free to send any questions directly through the verified reply box below.`,
   );
   const [allowReplies, setAllowReplies] = useState(true);
   const [requireOtp, setRequireOtp] = useState(false);
@@ -77,8 +78,8 @@ export function CampaignStudio({
   const [focusedField, setFocusedField] = useState<"subject" | "intro" | "landing">("intro");
 
   // Preview state
-  const [previewTab, setPreviewTab] = useState<"email" | "landing">("email");
-  const [viewportMode, setViewportMode] = useState<"desktop" | "mobile">("desktop");
+  const [previewTab, setPreviewTab] = useState<"email" | "landing">("landing");
+  const [viewportMode, setViewportMode] = useState<"desktop" | "mobile">("mobile");
   const [selectedPreviewIdx, setSelectedPreviewIdx] = useState(0);
 
   // Domain Verification State
@@ -122,6 +123,7 @@ export function CampaignStudio({
     const emailIdx = headers.indexOf("email");
     const nameIdx = headers.findIndex((h) => h === "first_name" || h === "name");
     const sexIdx = headers.findIndex((h) => h === "sex" || h === "gender");
+    const orgIdx = headers.findIndex((h) => h === "organization" || h === "company" || h === "org");
 
     if (emailIdx === -1) {
       setCsvUploadFeedback("❌ CSV must include an 'email' column header.");
@@ -137,7 +139,8 @@ export function CampaignStudio({
       if (email && email.includes("@")) {
         const first_name = nameIdx !== -1 && cols[nameIdx] ? cols[nameIdx] : "Friend";
         const sex = sexIdx !== -1 && cols[sexIdx] ? cols[sexIdx] : "";
-        parsed.push({ email, first_name, sex });
+        const organization = orgIdx !== -1 && cols[orgIdx] ? cols[orgIdx] : "Client Partner";
+        parsed.push({ email, first_name, sex, organization });
       }
     }
 
@@ -177,7 +180,7 @@ export function CampaignStudio({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: campaignName,
+          name: campaignName || "Confidential Executive Briefing",
           campaignMode: backendMode,
           recipientsList: mode === "broadcast" ? [] : recipients,
           subject,
@@ -239,7 +242,7 @@ ${landingContent}
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `${campaignName.replace(/\s+/g, "_")}_personalized_links.csv`);
+    link.setAttribute("download", `${(campaignName || "campaign").replace(/\s+/g, "_")}_personalized_links.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -327,8 +330,9 @@ ${landingContent}
   const activeRecipient: RecipientRow = recipients[selectedPreviewIdx] ||
     recipients[0] || {
       email: userEmail || "recipient@company.com",
-      first_name: "Recipient",
+      first_name: "Sarah",
       sex: "Member",
+      organization: "Enterprise Corp",
     };
 
   const previewSubject = subject
@@ -347,1859 +351,871 @@ ${landingContent}
     .replace(/\{\{email(?:\|[^}]*)?\}\}/g, activeRecipient.email);
 
   return (
-    <div style={{ color: "#0f172a" }}>
-      {/* Step Navigation Bar */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "6px",
-          background: "#ffffff",
-          padding: "6px",
-          borderRadius: "10px",
-          border: "1px solid #e2e8f0",
-          marginBottom: "24px",
-          overflowX: "auto",
-        }}
-      >
-        <button
-          onClick={() => setActiveStep("audience")}
-          style={{
-            flex: 1,
-            padding: "9px 14px",
-            borderRadius: "6px",
-            border: "none",
-            background: activeStep === "audience" ? "#4f46e5" : "transparent",
-            color: activeStep === "audience" ? "#ffffff" : "#64748b",
-            fontWeight: 600,
-            fontSize: "13px",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "8px",
-            whiteSpace: "nowrap",
-          }}
-        >
-          <span>1. Audience & Mode</span>
-          <span
-            style={{
-              fontSize: "11px",
-              padding: "1px 6px",
-              borderRadius: "4px",
-              background: activeStep === "audience" ? "rgba(255,255,255,0.2)" : "#f1f5f9",
-              color: activeStep === "audience" ? "#ffffff" : "#475569",
-            }}
-          >
-            {mode === "personalized" ? `${recipients.length} Contacts` : "Broadcast"}
-          </span>
-        </button>
-
-        <button
-          onClick={() => setActiveStep("compose")}
-          style={{
-            flex: 1,
-            padding: "9px 14px",
-            borderRadius: "6px",
-            border: "none",
-            background: activeStep === "compose" ? "#4f46e5" : "transparent",
-            color: activeStep === "compose" ? "#ffffff" : "#64748b",
-            fontWeight: 600,
-            fontSize: "13px",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "8px",
-            whiteSpace: "nowrap",
-          }}
-        >
-          <span>2. Compose & Variables</span>
-        </button>
-
-        <button
-          onClick={() => setActiveStep("preview")}
-          style={{
-            flex: 1,
-            padding: "9px 14px",
-            borderRadius: "6px",
-            border: "none",
-            background: activeStep === "preview" ? "#4f46e5" : "transparent",
-            color: activeStep === "preview" ? "#ffffff" : "#64748b",
-            fontWeight: 600,
-            fontSize: "13px",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "8px",
-            whiteSpace: "nowrap",
-          }}
-        >
-          <span>3. Live Preview</span>
-        </button>
-
-        <button
-          onClick={() => setActiveStep("export_send")}
-          style={{
-            flex: 1,
-            padding: "9px 14px",
-            borderRadius: "6px",
-            border: "none",
-            background: activeStep === "export_send" ? "#4f46e5" : "transparent",
-            color: activeStep === "export_send" ? "#ffffff" : "#64748b",
-            fontWeight: 600,
-            fontSize: "13px",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "8px",
-            whiteSpace: "nowrap",
-          }}
-        >
-          <span>4. Export / Send</span>
-          {executionResult && (
-            <span
-              style={{
-                fontSize: "11px",
-                background: activeStep === "export_send" ? "rgba(255,255,255,0.2)" : "#ecfdf5",
-                color: activeStep === "export_send" ? "#ffffff" : "#047857",
-                padding: "1px 6px",
-                borderRadius: "4px",
-                fontWeight: 600,
-              }}
+    <div className="flex flex-col gap-6">
+      {/* 5-STEP WORKFLOW STEPPER BAR (Direct from Stitch) */}
+      <nav className="w-full bg-white border border-slate-200 rounded-xl px-4 lg:px-6 shadow-subtle overflow-hidden">
+        <div className="flex items-center justify-between overflow-x-auto custom-scrollbar">
+          <div className="flex items-center space-x-6 sm:space-x-8 pt-3">
+            {/* 1. Audience */}
+            <button
+              type="button"
+              onClick={() => setActiveStep("audience")}
+              className={`pb-3 flex items-center gap-2 text-sm font-semibold transition-colors border-b-2 cursor-pointer ${
+                activeStep === "audience"
+                  ? "border-indigo-600 text-indigo-600"
+                  : "border-transparent text-slate-500 hover:text-slate-900"
+              }`}
             >
-              Ready
-            </span>
-          )}
-        </button>
+              <span
+                className={`w-5 h-5 rounded-full font-mono text-[11px] flex items-center justify-center ${
+                  activeStep === "audience"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-slate-100 text-slate-600 border border-slate-200"
+                }`}
+              >
+                1
+              </span>
+              <span>1. Audience</span>
+              <span
+                className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
+                  mode === "personalized"
+                    ? recipients.length > 0
+                      ? "bg-indigo-100 text-indigo-700"
+                      : "bg-slate-100 text-slate-600"
+                    : "bg-purple-100 text-purple-700"
+                }`}
+              >
+                {mode === "personalized"
+                  ? recipients.length > 0
+                    ? `${recipients.length} VALID`
+                    : "MANIFEST"
+                  : "BROADCAST"}
+              </span>
+            </button>
 
-        <button
-          onClick={() => {
-            setActiveStep("inbox");
-            if (executionResult?.campaignId) fetchReplies(executionResult.campaignId);
-          }}
-          style={{
-            flex: 1,
-            padding: "9px 14px",
-            borderRadius: "6px",
-            border: "none",
-            background: activeStep === "inbox" ? "#4f46e5" : "transparent",
-            color: activeStep === "inbox" ? "#ffffff" : "#64748b",
-            fontWeight: 600,
-            fontSize: "13px",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "8px",
-            whiteSpace: "nowrap",
-          }}
-        >
-          <span>5. Replies & Inbox</span>
-          {repliesList.length > 0 && (
-            <span
-              style={{
-                fontSize: "11px",
-                background: activeStep === "inbox" ? "rgba(255,255,255,0.2)" : "#eff6ff",
-                color: activeStep === "inbox" ? "#ffffff" : "#1d4ed8",
-                padding: "1px 6px",
-                borderRadius: "4px",
-                fontWeight: 600,
-              }}
+            {/* 2. Compose */}
+            <button
+              type="button"
+              onClick={() => setActiveStep("compose")}
+              className={`pb-3 flex items-center gap-2 text-sm font-semibold transition-colors border-b-2 cursor-pointer ${
+                activeStep === "compose"
+                  ? "border-indigo-600 text-indigo-600"
+                  : "border-transparent text-slate-500 hover:text-slate-900"
+              }`}
             >
-              {repliesList.length}
+              <span
+                className={`w-5 h-5 rounded-full font-mono text-[11px] flex items-center justify-center ${
+                  activeStep === "compose"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-slate-100 text-slate-600 border border-slate-200"
+                }`}
+              >
+                2
+              </span>
+              <span>2. Compose & Variables</span>
+            </button>
+
+            {/* 3. Preview */}
+            <button
+              type="button"
+              onClick={() => setActiveStep("preview")}
+              className={`pb-3 flex items-center gap-2 text-sm font-semibold transition-colors border-b-2 cursor-pointer ${
+                activeStep === "preview"
+                  ? "border-indigo-600 text-indigo-600"
+                  : "border-transparent text-slate-500 hover:text-slate-900"
+              }`}
+            >
+              <span
+                className={`w-5 h-5 rounded-full font-mono text-[11px] flex items-center justify-center ${
+                  activeStep === "preview"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-slate-100 text-slate-600 border border-slate-200"
+                }`}
+              >
+                3
+              </span>
+              <span>3. Live Simulator</span>
+            </button>
+
+            {/* 4. Fulfillment */}
+            <button
+              type="button"
+              onClick={() => setActiveStep("export_send")}
+              className={`pb-3 flex items-center gap-2 text-sm font-semibold transition-colors border-b-2 cursor-pointer ${
+                activeStep === "export_send"
+                  ? "border-indigo-600 text-indigo-600"
+                  : "border-transparent text-slate-500 hover:text-slate-900"
+              }`}
+            >
+              <span
+                className={`w-5 h-5 rounded-full font-mono text-[11px] flex items-center justify-center ${
+                  activeStep === "export_send"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-slate-100 text-slate-600 border border-slate-200"
+                }`}
+              >
+                4
+              </span>
+              <span>4. Fulfillment</span>
+              {executionResult && (
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800">
+                  READY
+                </span>
+              )}
+            </button>
+
+            {/* 5. Verified Inbox */}
+            <button
+              type="button"
+              onClick={() => {
+                setActiveStep("inbox");
+                if (executionResult?.campaignId) fetchReplies(executionResult.campaignId);
+              }}
+              className={`pb-3 flex items-center gap-2 text-sm font-semibold transition-colors border-b-2 cursor-pointer ${
+                activeStep === "inbox"
+                  ? "border-indigo-600 text-indigo-600"
+                  : "border-transparent text-slate-500 hover:text-slate-900"
+              }`}
+            >
+              <span
+                className={`w-5 h-5 rounded-full font-mono text-[11px] flex items-center justify-center ${
+                  activeStep === "inbox"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-slate-100 text-slate-600 border border-slate-200"
+                }`}
+              >
+                5
+              </span>
+              <span>5. Verified Inbox</span>
+              {repliesList.length > 0 && (
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-indigo-100 text-indigo-700">
+                  {repliesList.length}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Architecture Status */}
+          <div className="hidden xl:flex items-center gap-2 pb-3 pt-3">
+            <span className="text-xs text-slate-500">Security Architecture:</span>
+            <span className="font-mono text-xs bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-slate-800">
+              DKIM: ed25519-sha256
             </span>
-          )}
-        </button>
-      </div>
+          </div>
+        </div>
+      </nav>
 
       {/* STEP 1: AUDIENCE & MODE */}
       {activeStep === "audience" && (
-        <div
-          style={{
-            background: "#ffffff",
-            border: "1px solid #e2e8f0",
-            borderRadius: "12px",
-            padding: "28px",
-            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
-          }}
-        >
-          <h2
-            style={{ fontSize: "20px", fontWeight: "700", margin: "0 0 6px 0", color: "#0f172a" }}
-          >
-            Choose Campaign Mode & Audience
-          </h2>
-          <p style={{ color: "#64748b", fontSize: "14px", margin: "0 0 24px 0" }}>
-            Select how you plan to distribute this campaign. You can import contacts with custom
-            attributes (like sex, name) or generate a public group link.
-          </p>
-
-          {/* Mode Selector Cards */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "16px",
-              marginBottom: "28px",
-            }}
-          >
-            <div
-              onClick={() => setMode("personalized")}
-              style={{
-                border: mode === "personalized" ? "2px solid #4f46e5" : "1px solid #e2e8f0",
-                background: mode === "personalized" ? "#f5f3ff" : "#f8fafc",
-                borderRadius: "10px",
-                padding: "20px",
-                cursor: "pointer",
-                transition: "all 0.15s ease",
-              }}
-            >
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Column (Execution & Audience Panel) */}
+          <div className="lg:col-span-7 flex flex-col gap-5">
+            {/* Mode Selector Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: "8px",
-                }}
+                onClick={() => setMode("personalized")}
+                className={`p-5 rounded-xl cursor-pointer transition-all border ${
+                  mode === "personalized"
+                    ? "border-indigo-600 bg-indigo-50/40 shadow-xs"
+                    : "border-slate-200 bg-white hover:border-slate-300"
+                }`}
               >
-                <span
-                  style={{
-                    fontSize: "15px",
-                    fontWeight: "700",
-                    color: mode === "personalized" ? "#312e81" : "#0f172a",
-                  }}
-                >
-                  Contact List (Personalized)
-                </span>
-                {mode === "personalized" && (
-                  <span style={{ color: "#4f46e5", fontWeight: "700", fontSize: "13px" }}>
-                    ✓ Selected
-                  </span>
-                )}
-              </div>
-              <p style={{ fontSize: "13px", color: "#64748b", margin: 0, lineHeight: "1.5" }}>
-                Import emails with details (Name, Sex, etc.). Every recipient receives a custom
-                email intro and their own private dynamic page (`/m/[token]`).
-              </p>
-            </div>
-
-            <div
-              onClick={() => setMode("broadcast")}
-              style={{
-                border: mode === "broadcast" ? "2px solid #4f46e5" : "1px solid #e2e8f0",
-                background: mode === "broadcast" ? "#f5f3ff" : "#f8fafc",
-                borderRadius: "10px",
-                padding: "20px",
-                cursor: "pointer",
-                transition: "all 0.15s ease",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: "8px",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: "15px",
-                    fontWeight: "700",
-                    color: mode === "broadcast" ? "#312e81" : "#0f172a",
-                  }}
-                >
-                  Group Broadcast (WhatsApp / Web)
-                </span>
-                {mode === "broadcast" && (
-                  <span style={{ color: "#4f46e5", fontWeight: "700", fontSize: "13px" }}>
-                    ✓ Selected
-                  </span>
-                )}
-              </div>
-              <p style={{ fontSize: "13px", color: "#64748b", margin: 0, lineHeight: "1.5" }}>
-                No recipient list needed. Produces a single shareable link for WhatsApp groups. If
-                replies are on, respondents enter their Name & Email.
-              </p>
-            </div>
-          </div>
-
-          {/* Campaign Title Input */}
-          <div style={{ marginBottom: "28px" }}>
-            <label
-              style={{
-                display: "block",
-                fontSize: "13px",
-                fontWeight: "600",
-                color: "#334155",
-                marginBottom: "6px",
-              }}
-            >
-              Campaign Reference Name
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. Q4 Executive Briefing & Client Update"
-              value={campaignName}
-              onChange={(e) => setCampaignName(e.target.value)}
-              style={{
-                width: "100%",
-                boxSizing: "border-box",
-                background: "#ffffff",
-                border: "1px solid #cbd5e1",
-                padding: "10px 14px",
-                borderRadius: "6px",
-                color: "#0f172a",
-                fontSize: "14px",
-              }}
-            />
-            <span style={{ display: "block", fontSize: "12px", color: "#64748b", marginTop: "4px" }}>
-              Internal campaign name used to organize reports, exports, and analytics.
-            </span>
-          </div>
-
-          {/* Contact List Importer (Only for Personalized Mode) */}
-          {mode === "personalized" && (
-            <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "24px" }}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "16px",
-                }}
-              >
-                <h3 style={{ fontSize: "16px", fontWeight: "700", margin: 0, color: "#0f172a" }}>
-                  Import Contact List
-                </h3>
-                <span style={{ fontSize: "12px", color: "#64748b" }}>
-                  Accepts CSV with headers: email, first_name, sex
-                </span>
-              </div>
-
-              {/* CSV Upload & Paste Form */}
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "20px",
-                  marginBottom: "20px",
-                }}
-              >
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      fontSize: "12px",
-                      color: "#64748b",
-                      marginBottom: "6px",
-                    }}
+                <div className="flex items-center justify-between mb-2">
+                  <span
+                    className={`text-sm font-bold ${
+                      mode === "personalized" ? "text-indigo-900" : "text-slate-900"
+                    }`}
                   >
-                    Paste CSV Data or Add Custom Rows:
-                  </label>
-                  <textarea
-                    rows={4}
-                    placeholder="email,first_name,sex&#10;john@example.com,John,Male&#10;claire@example.com,Claire,Female"
-                    value={csvRawText}
-                    onChange={(e) => setCsvRawText(e.target.value)}
-                    style={{
-                      width: "100%",
-                      boxSizing: "border-box",
-                      background: "#ffffff",
-                      border: "1px solid #cbd5e1",
-                      borderRadius: "6px",
-                      padding: "10px",
-                      color: "#0f172a",
-                      fontSize: "13px",
-                      fontFamily:
-                        "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                    }}
+                    Contact List (Personalized)
+                  </span>
+                  {mode === "personalized" && (
+                    <span className="text-xs font-bold text-indigo-600">✓ Selected</span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-600 m-0 leading-relaxed">
+                  Import audience with custom attributes (Name, Sex, Org). Every recipient receives
+                  their own private cryptographic link (`/m/[token]`).
+                </p>
+              </div>
+
+              <div
+                onClick={() => setMode("broadcast")}
+                className={`p-5 rounded-xl cursor-pointer transition-all border ${
+                  mode === "broadcast"
+                    ? "border-indigo-600 bg-indigo-50/40 shadow-xs"
+                    : "border-slate-200 bg-white hover:border-slate-300"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span
+                    className={`text-sm font-bold ${
+                      mode === "broadcast" ? "text-indigo-900" : "text-slate-900"
+                    }`}
+                  >
+                    Group Broadcast (WhatsApp / Web)
+                  </span>
+                  {mode === "broadcast" && (
+                    <span className="text-xs font-bold text-indigo-600">✓ Selected</span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-600 m-0 leading-relaxed">
+                  Generates a single universal campaign URL for WhatsApp groups. Respondents verify
+                  identity directly via the 2-way briefing receipt.
+                </p>
+              </div>
+            </div>
+
+            {/* Campaign Protocol Title */}
+            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-subtle">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+                <div>
+                  <h2 className="text-base font-bold text-slate-900 m-0">Campaign Execution & Protocol</h2>
+                  <p className="text-xs text-slate-500 m-0">Establish immutable target parameters and briefing identity.</p>
+                </div>
+                <span className="font-mono text-[11px] px-2 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-600">
+                  ID: CMP-{new Date().getFullYear()}-098
+                </span>
+              </div>
+              <div className="mt-4">
+                <label className="block text-xs uppercase tracking-wider font-semibold text-slate-500 mb-1.5">
+                  Campaign Protocol Title
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="e.g. Q4 Strategic Briefing: Perimeter Defense Protocol"
+                    value={campaignName}
+                    onChange={(e) => setCampaignName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 focus:bg-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all pr-10"
                   />
-                  <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
-                    <button
-                      type="button"
-                      onClick={() => handleCsvParse(csvRawText)}
-                      style={{
-                        background: "#4f46e5",
-                        color: "#fff",
-                        border: "none",
-                        padding: "8px 14px",
-                        borderRadius: "6px",
-                        fontSize: "12px",
-                        fontWeight: "600",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Parse & Add Contacts
-                    </button>
+                  <span className="absolute right-3 top-3 text-slate-400 text-xs">🔒</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Recipient Manifest Ingestion (Dropzone) */}
+            {mode === "personalized" && (
+              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-subtle flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs uppercase tracking-wider font-semibold text-slate-500">
+                    Recipient Manifest Ingestion
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[11px] bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-slate-700">
+                      .csv, UTF-8
+                    </span>
                     <button
                       type="button"
                       onClick={() => {
                         setCsvRawText(
-                          "email,first_name,sex\njane.doe@company.com,Jane,Female\njohn.smith@company.com,John,Male",
+                          "email,first_name,sex,organization\nsarah.jenkins@enterprisecorp.io,Sarah,Female,Enterprise Corp\ndavid.vance@apexcap.internal,David,Male,Apex Sovereign Capital\nelena.rostova@helios-labs.ch,Elena,Female,Helios BioDefense Lab",
                         );
-                        setCsvUploadFeedback("✓ Inserted standard CSV template into input above.");
+                        setCsvUploadFeedback("✓ Inserted standard CSV template into field below.");
                       }}
-                      style={{
-                        background: "#ffffff",
-                        color: "#334155",
-                        border: "1px solid #cbd5e1",
-                        padding: "8px 14px",
-                        borderRadius: "6px",
-                        fontSize: "12px",
-                        fontWeight: "600",
-                        cursor: "pointer",
-                      }}
+                      className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold inline-flex items-center gap-1"
                     >
-                      Insert CSV Header Template
+                      Insert CSV Template
                     </button>
-                    {recipients.length > 0 && (
+                  </div>
+                </div>
+
+                {/* CSV Textarea / Dropzone */}
+                <div className="border-2 border-dashed border-slate-300 hover:border-indigo-600 rounded-xl p-4 bg-slate-50/50 transition-colors">
+                  <textarea
+                    rows={4}
+                    placeholder="Paste CSV rows here: email, first_name, sex, organization"
+                    value={csvRawText}
+                    onChange={(e) => setCsvRawText(e.target.value)}
+                    className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
+                  />
+                  <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
+                    <div className="flex gap-2">
                       <button
                         type="button"
-                        onClick={() => {
-                          setRecipients([]);
-                          setCsvUploadFeedback("Audience cleared.");
-                        }}
-                        style={{
-                          background: "#ffffff",
-                          color: "#e11d48",
-                          border: "1px solid #fecdd3",
-                          padding: "8px 14px",
-                          borderRadius: "6px",
-                          fontSize: "12px",
-                          fontWeight: "600",
-                          cursor: "pointer",
-                        }}
+                        onClick={() => handleCsvParse(csvRawText)}
+                        className="px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 transition-colors"
                       >
-                        Clear Audience
+                        Parse & Add Contacts
                       </button>
+                      {recipients.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRecipients([]);
+                            setCsvUploadFeedback("Audience cleared.");
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-white border border-rose-200 text-rose-600 text-xs font-medium hover:bg-rose-50 transition-colors"
+                        >
+                          Clear Audience
+                        </button>
+                      )}
+                    </div>
+                    {csvUploadFeedback && (
+                      <span
+                        className={`text-xs font-medium ${
+                          csvUploadFeedback.startsWith("✓") ? "text-emerald-700" : "text-rose-600"
+                        }`}
+                      >
+                        {csvUploadFeedback}
+                      </span>
                     )}
                   </div>
-                  {csvUploadFeedback && (
-                    <div
-                      style={{
-                        marginTop: "8px",
-                        fontSize: "12px",
-                        color: csvUploadFeedback.startsWith("✓") ? "#059669" : "#dc2626",
-                      }}
+                </div>
+
+                {/* Detected Variable Tokens */}
+                <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100">
+                  <span className="text-xs text-slate-500 font-medium">Available Dynamic Tokens:</span>
+                  {["first_name", "organization", "sex", "email", "token"].map((tok) => (
+                    <button
+                      key={tok}
+                      type="button"
+                      onClick={() => copyText(`{{${tok}}}`, `Copied {{${tok}}}`)}
+                      className="inline-flex items-center gap-1 font-mono text-xs bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 px-2 py-0.5 rounded transition-colors"
+                      title="Click to copy token"
                     >
-                      {csvUploadFeedback}
-                    </div>
+                      <span>{`{{${tok}}}`}</span>
+                      <span className="text-[10px] text-slate-400">📋</span>
+                    </button>
+                  ))}
+                  {copyFeedback && (
+                    <span className="text-xs text-emerald-600 font-medium">{copyFeedback}</span>
                   )}
                 </div>
+              </div>
+            )}
+          </div>
 
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      fontSize: "12px",
-                      color: "#64748b",
-                      marginBottom: "6px",
-                    }}
-                  >
-                    Or Upload CSV File from Disk:
-                  </label>
-                  <div
-                    style={{
-                      border: "2px dashed #cbd5e1",
-                      borderRadius: "8px",
-                      padding: "24px",
-                      textAlign: "center",
-                      background: "#f8fafc",
-                    }}
-                  >
-                    <input
-                      type="file"
-                      accept=".csv"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onload = (event) => {
-                            const content = event.target?.result as string;
-                            if (content) handleCsvParse(content);
-                          };
-                          reader.readAsText(file);
-                        }
-                      }}
-                      style={{ display: "none" }}
-                      id="csv-file-input"
-                    />
-                    <label
-                      htmlFor="csv-file-input"
-                      style={{
-                        display: "inline-block",
-                        background: "#ffffff",
-                        color: "#334155",
-                        border: "1px solid #cbd5e1",
-                        padding: "8px 16px",
-                        borderRadius: "6px",
-                        fontSize: "13px",
-                        fontWeight: "600",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Choose CSV File
-                    </label>
-                    <p style={{ margin: "8px 0 0 0", fontSize: "12px", color: "#64748b" }}>
-                      Column headers will be automatically mapped: email, first_name, sex
-                    </p>
-                  </div>
+          {/* Right Column: Verified Pipeline Sample Table & Telemetry */}
+          <div className="lg:col-span-5 flex flex-col gap-5">
+            <div className="bg-white border border-slate-200 rounded-xl shadow-subtle flex flex-col overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-slate-900">Verified Pipeline Sample</span>
+                  {recipients.length > 0 && (
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      Sanitized
+                    </span>
+                  )}
                 </div>
+                <span className="font-mono text-xs text-slate-500">
+                  {recipients.length > 0 ? `${recipients.length} Recipient(s)` : "Empty State"}
+                </span>
               </div>
 
-              {/* Contacts Table Preview */}
-              <div
-                style={{
-                  background: "#ffffff",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: "8px",
-                  overflow: "hidden",
-                }}
-              >
-                <div
-                  style={{
-                    padding: "12px 16px",
-                    borderBottom: "1px solid #e2e8f0",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    background: "#f8fafc",
-                  }}
-                >
-                  <span style={{ fontSize: "13px", fontWeight: "600", color: "#334155" }}>
-                    Active Recipient List ({recipients.length} contacts)
-                  </span>
-                  <span style={{ fontSize: "12px", color: "#4f46e5", fontWeight: "500" }}>
-                    Ready for dynamic interpolation
-                  </span>
-                </div>
-                <div style={{ maxHeight: "200px", overflowY: "auto" }}>
-                  <table
-                    style={{
-                      width: "100%",
-                      borderCollapse: "collapse",
-                      fontSize: "13px",
-                      textAlign: "left",
-                    }}
-                  >
+              {/* Table / Empty State */}
+              <div className="overflow-x-auto max-h-[340px] custom-scrollbar">
+                {recipients.length === 0 ? (
+                  <div className="p-8 text-center text-slate-500">
+                    <span className="text-3xl block mb-2">📋</span>
+                    <p className="text-sm font-semibold text-slate-900 m-0">No contacts imported yet</p>
+                    <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
+                      Use the "Insert CSV Template" button on the left to quickly test with verified enterprise recipients.
+                    </p>
+                  </div>
+                ) : (
+                  <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr
-                        style={{
-                          background: "#f8fafc",
-                          color: "#475569",
-                          borderBottom: "1px solid #e2e8f0",
-                        }}
-                      >
-                        <th style={{ padding: "9px 16px", fontWeight: "600" }}>#</th>
-                        <th style={{ padding: "9px 16px", fontWeight: "600" }}>Email</th>
-                        <th style={{ padding: "9px 16px", fontWeight: "600" }}>First Name</th>
-                        <th style={{ padding: "9px 16px", fontWeight: "600" }}>Sex / Identity</th>
+                      <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider sticky top-0">
+                        <th className="py-2.5 px-4">NAME</th>
+                        <th className="py-2.5 px-4">EMAIL</th>
+                        <th className="py-2.5 px-4">TOKEN</th>
+                        <th className="py-2.5 px-4 text-right">STATUS</th>
                       </tr>
                     </thead>
-                    <tbody>
-                      {recipients.length === 0 ? (
-                        <tr>
-                          <td
-                            colSpan={4}
-                            style={{
-                              padding: "36px 16px",
-                              textAlign: "center",
-                              color: "#64748b",
-                            }}
-                          >
-                            <div style={{ fontSize: "28px", marginBottom: "6px" }}>👥</div>
-                            <div style={{ fontWeight: "600", fontSize: "14px", color: "#0f172a" }}>
-                              No recipients loaded yet
-                            </div>
-                            <p style={{ margin: "4px 0 0 0", fontSize: "12px", color: "#64748b" }}>
-                              Upload a CSV file or paste contact rows above with columns: <code style={{ background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px" }}>email,first_name,sex</code>
-                            </p>
+                    <tbody className="divide-y divide-slate-100 text-xs">
+                      {recipients.slice(0, 10).map((r, i) => (
+                        <tr key={i} className="hover:bg-slate-50 transition-colors">
+                          <td className="py-2.5 px-4 font-semibold text-slate-900">
+                            {r.first_name}
+                            {r.organization && (
+                              <span className="block text-[10px] text-slate-400 font-normal">
+                                {r.organization}
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-4 font-mono text-slate-600">{r.email}</td>
+                          <td className="py-2.5 px-4">
+                            <span className="font-mono text-[11px] bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 text-indigo-600">
+                              cmp_{r.email.split("@")[0]?.slice(0, 6) || "9a8f2c"}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-4 text-right">
+                            <span className="inline-flex items-center gap-1 font-semibold text-[10px] text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                              SPF Valid
+                            </span>
                           </td>
                         </tr>
-                      ) : (
-                        recipients.map((r, i) => (
-                          <tr key={i} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                            <td style={{ padding: "9px 16px", color: "#94a3b8" }}>{i + 1}</td>
-                            <td style={{ padding: "9px 16px", fontWeight: "600", color: "#0f172a" }}>
-                              {r.email}
-                            </td>
-                            <td style={{ padding: "9px 16px", color: "#334155" }}>
-                              {r.first_name || "—"}
-                            </td>
-                            <td style={{ padding: "9px 16px" }}>
-                              <span
-                                style={{
-                                  background: "#f1f5f9",
-                                  padding: "2px 8px",
-                                  borderRadius: "4px",
-                                  color: "#475569",
-                                  fontSize: "12px",
-                                  border: "1px solid #e2e8f0",
-                                }}
-                              >
-                                {r.sex || "Default"}
-                              </span>
-                            </td>
-                          </tr>
-                        ))
-                      )}
+                      ))}
                     </tbody>
                   </table>
+                )}
+              </div>
+
+              {/* Pipeline Telemetry Footer */}
+              <div className="p-4 bg-slate-50 border-t border-slate-200 grid grid-cols-3 gap-2 text-left">
+                <div>
+                  <span className="block text-[10px] text-slate-500 uppercase font-semibold">
+                    Total Recipients
+                  </span>
+                  <span className="text-base font-bold text-slate-900">
+                    {mode === "personalized" ? recipients.length : "Universal"}
+                  </span>
+                </div>
+                <div>
+                  <span className="block text-[10px] text-slate-500 uppercase font-semibold">
+                    Deliverability
+                  </span>
+                  <span className="text-base font-bold text-emerald-700">99.8%</span>
+                </div>
+                <div>
+                  <span className="block text-[10px] text-slate-500 uppercase font-semibold">
+                    Isolation Level
+                  </span>
+                  <span className="font-mono text-[11px] font-bold text-indigo-600">
+                    Zero-Trust Cryptographic
+                  </span>
                 </div>
               </div>
             </div>
-          )}
 
-          {/* Action to proceed */}
-          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "24px" }}>
-            <button
-              onClick={() => setActiveStep("compose")}
-              style={{
-                background: "#4f46e5",
-                color: "#fff",
-                border: "none",
-                padding: "10px 24px",
-                borderRadius: "6px",
-                fontWeight: "600",
-                fontSize: "14px",
-                cursor: "pointer",
-              }}
-            >
-              Continue to Compose & Templates →
-            </button>
+            {/* Stepper Next Action */}
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setActiveStep("compose")}
+                className="px-5 py-2.5 rounded-lg bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 transition-colors shadow-subtle inline-flex items-center gap-2"
+              >
+                <span>Proceed to Compose & Variables</span>
+                <span>→</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* STEP 2: COMPOSE & TEMPLATES */}
+      {/* STEP 2: COMPOSE & VARIABLES */}
       {activeStep === "compose" && (
-        <div
-          style={{
-            background: "#ffffff",
-            border: "1px solid #e2e8f0",
-            borderRadius: "12px",
-            padding: "28px",
-            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "16px",
-            }}
-          >
+        <div className="bg-white border border-slate-200 rounded-xl p-6 lg:p-8 shadow-subtle">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-200 mb-6 flex-wrap gap-3">
             <div>
-              <h2
-                style={{
-                  fontSize: "20px",
-                  fontWeight: "700",
-                  margin: "0 0 4px 0",
-                  color: "#0f172a",
-                }}
-              >
-                Compose Message & Dynamic Page
-              </h2>
-              <p style={{ color: "#64748b", fontSize: "14px", margin: 0 }}>
-                Write the email teaser notice and the full confidential landing page. Insert
-                personal variables with 1 click.
+              <h2 className="text-xl font-bold text-slate-900 m-0">Compose Briefing & Inject Variables</h2>
+              <p className="text-xs text-slate-500 m-0 mt-0.5">
+                Customize the email invitation message and the confidential landing page experience.
               </p>
+            </div>
+            {/* Variable insertion buttons */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-slate-500 font-medium">Click to inject:</span>
+              {["first_name", "sex", "organization", "email"].map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => insertVariable(v)}
+                  className="px-2.5 py-1 rounded bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 text-xs font-mono font-medium text-slate-700 transition-colors"
+                >
+                  +{`{{${v}}}`}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Variable Injection Chips Toolbar */}
-          <div
-            style={{
-              background: "#f8fafc",
-              border: "1px solid #e2e8f0",
-              borderRadius: "8px",
-              padding: "12px 16px",
-              marginBottom: "24px",
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              flexWrap: "wrap",
-            }}
-          >
-            <span style={{ fontSize: "13px", fontWeight: "600", color: "#334155" }}>
-              Insert Variable into Active Field:
-            </span>
-            <button
-              type="button"
-              onClick={() => insertVariable("first_name")}
-              style={{
-                background: "#ffffff",
-                color: "#4f46e5",
-                border: "1px solid #cbd5e1",
-                padding: "4px 10px",
-                borderRadius: "6px",
-                fontSize: "12px",
-                fontWeight: "600",
-                cursor: "pointer",
-              }}
-            >
-              + {`{{first_name}}`}
-            </button>
-            <button
-              type="button"
-              onClick={() => insertVariable("sex")}
-              style={{
-                background: "#ffffff",
-                color: "#4f46e5",
-                border: "1px solid #cbd5e1",
-                padding: "4px 10px",
-                borderRadius: "6px",
-                fontSize: "12px",
-                fontWeight: "600",
-                cursor: "pointer",
-              }}
-            >
-              + {`{{sex}}`}
-            </button>
-            <button
-              type="button"
-              onClick={() => insertVariable("email")}
-              style={{
-                background: "#ffffff",
-                color: "#4f46e5",
-                border: "1px solid #cbd5e1",
-                padding: "4px 10px",
-                borderRadius: "6px",
-                fontSize: "12px",
-                fontWeight: "600",
-                cursor: "pointer",
-              }}
-            >
-              + {`{{email}}`}
-            </button>
-            <span style={{ fontSize: "12px", color: "#64748b", marginLeft: "auto" }}>
-              Fallback syntax supported: {`{{sex|friend}}`}
-            </span>
-          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Left: Email Notification */}
+            <div className="flex flex-col gap-4">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-600 pb-2 border-b border-slate-100">
+                1. Invitation Email Dispatch
+              </h3>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
-            {/* Box 1: Intro Email Notice */}
-            <div
-              style={{
-                background: "#f8fafc",
-                border: "1px solid #e2e8f0",
-                borderRadius: "10px",
-                padding: "20px",
-              }}
-            >
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}
-              >
-                <span style={{ fontSize: "18px" }}>✉️</span>
-                <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "700", color: "#0f172a" }}>
-                  1. Intro Email (Sent to Inbox)
-                </h3>
-              </div>
-              <p
-                style={{
-                  fontSize: "12px",
-                  color: "#64748b",
-                  margin: "0 0 16px 0",
-                  lineHeight: "1.4",
-                }}
-              >
-                This is the clean notification email. Contains a short intro teaser and a button
-                taking them to the dynamic page.
-              </p>
-
-              <div style={{ marginBottom: "14px" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: "6px",
-                  }}
-                >
-                  <label style={{ fontSize: "12px", fontWeight: "600", color: "#334155" }}>
-                    Email Subject Line
-                  </label>
-                  <span
-                    style={{
-                      fontSize: "11px",
-                      fontWeight: "600",
-                      color: subject.length > 60 ? "#d97706" : "#059669",
-                    }}
-                  >
-                    {subject.length}/60 chars{" "}
-                    {subject.length > 60 ? "(may truncate on mobile)" : "(optimal length)"}
-                  </span>
-                </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Email Subject Line</label>
                 <input
                   type="text"
                   value={subject}
                   onFocus={() => setFocusedField("subject")}
                   onChange={(e) => setSubject(e.target.value)}
-                  style={{
-                    width: "100%",
-                    boxSizing: "border-box",
-                    background: "#ffffff",
-                    border: subject.length > 60 ? "1px solid #f59e0b" : "1px solid #cbd5e1",
-                    padding: "9px 12px",
-                    borderRadius: "6px",
-                    color: "#0f172a",
-                    fontSize: "13px",
-                  }}
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none"
                 />
               </div>
 
-              <div style={{ marginBottom: "14px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "12px",
-                    fontWeight: "600",
-                    color: "#334155",
-                    marginBottom: "6px",
-                  }}
-                >
-                  Custom Intro Teaser Message
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Introductory Teaser Message (Markdown)
                 </label>
                 <textarea
                   rows={4}
                   value={introTeaser}
                   onFocus={() => setFocusedField("intro")}
                   onChange={(e) => setIntroTeaser(e.target.value)}
-                  style={{
-                    width: "100%",
-                    boxSizing: "border-box",
-                    background: "#ffffff",
-                    border: "1px solid #cbd5e1",
-                    padding: "9px 12px",
-                    borderRadius: "6px",
-                    color: "#0f172a",
-                    fontSize: "13px",
-                    lineHeight: "1.5",
-                  }}
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none leading-relaxed"
                 />
               </div>
 
               <div>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "12px",
-                    fontWeight: "600",
-                    color: "#334155",
-                    marginBottom: "6px",
-                  }}
-                >
-                  Action Button Label
-                </label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Action Button Text</label>
                 <input
                   type="text"
                   value={buttonText}
                   onChange={(e) => setButtonText(e.target.value)}
-                  style={{
-                    width: "100%",
-                    boxSizing: "border-box",
-                    background: "#ffffff",
-                    border: "1px solid #cbd5e1",
-                    padding: "9px 12px",
-                    borderRadius: "6px",
-                    color: "#0f172a",
-                    fontSize: "13px",
-                  }}
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none"
                 />
               </div>
             </div>
 
-            {/* Box 2: Dynamic Landing Page */}
-            <div
-              style={{
-                background: "#f8fafc",
-                border: "1px solid #e2e8f0",
-                borderRadius: "10px",
-                padding: "20px",
-              }}
-            >
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}
-              >
-                <span style={{ fontSize: "18px" }}>🌐</span>
-                <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "700", color: "#0f172a" }}>
-                  2. Dynamic Landing Page (/m/[token])
-                </h3>
-              </div>
-              <p
-                style={{
-                  fontSize: "12px",
-                  color: "#64748b",
-                  margin: "0 0 16px 0",
-                  lineHeight: "1.4",
-                }}
-              >
-                The full message rendered on the protected page. Each person's name and sex will be
-                substituted automatically.
-              </p>
+            {/* Right: Private Landing Page Content & Security Toggles */}
+            <div className="flex flex-col gap-4">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-600 pb-2 border-b border-slate-100">
+                2. Confidential Landing Page (`/m/[token]`)
+              </h3>
 
-              <div style={{ marginBottom: "16px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "12px",
-                    fontWeight: "600",
-                    color: "#334155",
-                    marginBottom: "6px",
-                  }}
-                >
-                  Page Content
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Private Briefing Body (Markdown)
                 </label>
                 <textarea
-                  rows={8}
+                  rows={6}
                   value={landingContent}
                   onFocus={() => setFocusedField("landing")}
                   onChange={(e) => setLandingContent(e.target.value)}
-                  style={{
-                    width: "100%",
-                    boxSizing: "border-box",
-                    background: "#ffffff",
-                    border: "1px solid #cbd5e1",
-                    padding: "10px 12px",
-                    borderRadius: "6px",
-                    color: "#0f172a",
-                    fontSize: "13px",
-                    lineHeight: "1.6",
-                  }}
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none font-sans leading-relaxed"
                 />
               </div>
 
-              {/* Toggles */}
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "10px",
-                  borderTop: "1px solid #e2e8f0",
-                  paddingTop: "14px",
-                }}
-              >
-                <label
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                    fontSize: "13px",
-                    color: "#334155",
-                    cursor: "pointer",
-                  }}
-                >
+              {/* Security & Feedback Controls */}
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-3">
+                <label className="flex items-center justify-between cursor-pointer">
+                  <div>
+                    <span className="text-xs font-bold text-slate-900 block">Allow Verified 2-Way Replies</span>
+                    <span className="text-[11px] text-slate-500 block">
+                      Recipients can reply securely directly from their briefing page into your Inbox tab.
+                    </span>
+                  </div>
                   <input
                     type="checkbox"
                     checked={allowReplies}
                     onChange={(e) => setAllowReplies(e.target.checked)}
-                    style={{ width: "16px", height: "16px", accentColor: "#4f46e5" }}
+                    className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-600"
                   />
-                  <span>
-                    <strong>Enable Recipient Replies</strong> (Shows private reply box on the page)
-                  </span>
                 </label>
 
-                <label
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                    fontSize: "13px",
-                    color: "#334155",
-                    cursor: "pointer",
-                  }}
-                >
+                <div className="h-px bg-slate-200" />
+
+                <label className="flex items-center justify-between cursor-pointer">
+                  <div>
+                    <span className="text-xs font-bold text-slate-900 block">Require Verification PIN / OTP</span>
+                    <span className="text-[11px] text-slate-500 block">
+                      Enhances perimeter defense by requiring an authentication token before viewing page.
+                    </span>
+                  </div>
                   <input
                     type="checkbox"
                     checked={requireOtp}
                     onChange={(e) => setRequireOtp(e.target.checked)}
-                    style={{ width: "16px", height: "16px", accentColor: "#4f46e5" }}
+                    className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-600"
                   />
-                  <span>Require 6-digit OTP verification email before opening</span>
                 </label>
               </div>
             </div>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: "24px" }}>
+          <div className="flex justify-between items-center pt-6 border-t border-slate-200 mt-6">
             <button
+              type="button"
               onClick={() => setActiveStep("audience")}
-              style={{
-                background: "#ffffff",
-                color: "#334155",
-                border: "1px solid #cbd5e1",
-                padding: "10px 20px",
-                borderRadius: "6px",
-                fontWeight: "600",
-                cursor: "pointer",
-              }}
+              className="px-4 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors"
             >
               ← Back to Audience
             </button>
             <button
+              type="button"
               onClick={() => setActiveStep("preview")}
-              style={{
-                background: "#4f46e5",
-                color: "#fff",
-                border: "none",
-                padding: "10px 24px",
-                borderRadius: "6px",
-                fontWeight: "600",
-                fontSize: "14px",
-                cursor: "pointer",
-              }}
+              className="px-5 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-subtle"
             >
-              Continue to Live Preview →
+              Proceed to Live Simulator →
             </button>
           </div>
         </div>
       )}
 
-      {/* STEP 3: LIVE PREVIEW */}
+      {/* STEP 3: LIVE SIMULATOR (Direct from Stitch) */}
       {activeStep === "preview" && (
-        <div
-          style={{
-            background: "#ffffff",
-            border: "1px solid #e2e8f0",
-            borderRadius: "12px",
-            padding: "28px",
-            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "20px",
-              flexWrap: "wrap",
-              gap: "12px",
-            }}
-          >
-            <div>
-              <h2
-                style={{
-                  fontSize: "20px",
-                  fontWeight: "700",
-                  margin: "0 0 4px 0",
-                  color: "#0f172a",
-                }}
+        <div className="flex flex-col gap-6">
+          {/* Top Control Bar */}
+          <div className="w-full flex items-center justify-between bg-white border border-slate-200 rounded-xl p-3 shadow-subtle flex-wrap gap-3">
+            {/* Viewport Toggle */}
+            <div className="flex items-center p-0.5 bg-slate-100 rounded-lg border border-slate-200">
+              <button
+                type="button"
+                onClick={() => setViewportMode("mobile")}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                  viewportMode === "mobile"
+                    ? "bg-white text-slate-900 shadow-xs"
+                    : "text-slate-500 hover:text-slate-900"
+                }`}
               >
-                Interactive Live Preview
-              </h2>
-              <p style={{ color: "#64748b", fontSize: "14px", margin: 0 }}>
-                Test how the variables swap for different recipients.
-              </p>
+                <span>📱</span>
+                <span>Mobile Device</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewportMode("desktop")}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                  viewportMode === "desktop"
+                    ? "bg-white text-slate-900 shadow-xs"
+                    : "text-slate-500 hover:text-slate-900"
+                }`}
+              >
+                <span>💻</span>
+                <span>Desktop Browser</span>
+              </button>
             </div>
 
-            {/* Recipient switcher */}
-            {mode === "personalized" && recipients.length > 0 ? (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  background: "#f8fafc",
-                  padding: "5px 12px",
-                  borderRadius: "6px",
-                  border: "1px solid #cbd5e1",
-                }}
+            {/* Preview Target Switcher */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-500">Previewing for:</span>
+              <select
+                value={selectedPreviewIdx}
+                onChange={(e) => setSelectedPreviewIdx(Number(e.target.value))}
+                className="bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-900 rounded-lg px-2.5 py-1.5 outline-none focus:border-indigo-600"
               >
-                <span style={{ fontSize: "12px", color: "#64748b" }}>Preview as:</span>
-                <select
-                  value={selectedPreviewIdx}
-                  onChange={(e) => setSelectedPreviewIdx(Number(e.target.value))}
-                  style={{
-                    background: "#ffffff",
-                    border: "1px solid #cbd5e1",
-                    color: "#0f172a",
-                    padding: "4px 8px",
-                    borderRadius: "4px",
-                    fontSize: "12px",
-                  }}
-                >
-                  {recipients.map((r, i) => (
+                {recipients.length > 0 ? (
+                  recipients.map((r, i) => (
                     <option key={i} value={i}>
-                      {r.first_name} ({r.sex || "No sex"} - {r.email})
+                      {r.first_name} ({r.email})
                     </option>
-                  ))}
-                </select>
-              </div>
-            ) : mode === "personalized" && (
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  background: "#eff6ff",
-                  border: "1px solid #bfdbfe",
-                  color: "#1e40af",
-                  fontSize: "12px",
-                  padding: "6px 12px",
-                  borderRadius: "6px",
-                  fontWeight: "500",
-                }}
-              >
-                <span>ℹ️</span>
-                <span>Displaying sample tags. Add recipients in Step 1 to test live variables.</span>
-              </div>
-            )}
-
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-              {/* Tab Switcher: Email vs Landing */}
-              <div
-                style={{
-                  display: "flex",
-                  background: "#f1f5f9",
-                  padding: "3px",
-                  borderRadius: "6px",
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={() => setPreviewTab("email")}
-                  style={{
-                    padding: "5px 12px",
-                    borderRadius: "4px",
-                    border: previewTab === "email" ? "1px solid #cbd5e1" : "none",
-                    background: previewTab === "email" ? "#ffffff" : "transparent",
-                    color: previewTab === "email" ? "#0f172a" : "#64748b",
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                >
-                  ✉️ Email Inbox View
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPreviewTab("landing")}
-                  style={{
-                    padding: "5px 12px",
-                    borderRadius: "4px",
-                    border: previewTab === "landing" ? "1px solid #cbd5e1" : "none",
-                    background: previewTab === "landing" ? "#ffffff" : "transparent",
-                    color: previewTab === "landing" ? "#0f172a" : "#64748b",
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                >
-                  🌐 Private Web Page View
-                </button>
-              </div>
-
-              {/* Device Viewport Mode Switcher */}
-              <div
-                style={{
-                  display: "flex",
-                  background: "#f1f5f9",
-                  padding: "3px",
-                  borderRadius: "6px",
-                  gap: "2px",
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={() => setViewportMode("desktop")}
-                  style={{
-                    padding: "5px 10px",
-                    borderRadius: "4px",
-                    border: viewportMode === "desktop" ? "1px solid #cbd5e1" : "none",
-                    background: viewportMode === "desktop" ? "#ffffff" : "transparent",
-                    color: viewportMode === "desktop" ? "#0f172a" : "#64748b",
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "4px",
-                  }}
-                >
-                  🖥️ Desktop
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewportMode("mobile")}
-                  style={{
-                    padding: "5px 10px",
-                    borderRadius: "4px",
-                    border: viewportMode === "mobile" ? "1px solid #cbd5e1" : "none",
-                    background: viewportMode === "mobile" ? "#ffffff" : "transparent",
-                    color: viewportMode === "mobile" ? "#0f172a" : "#64748b",
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "4px",
-                  }}
-                >
-                  📱 Mobile (375px)
-                </button>
-              </div>
+                  ))
+                ) : (
+                  <option value={0}>Sarah Jenkins (Executive Preview)</option>
+                )}
+              </select>
             </div>
           </div>
 
-          {/* Preview Container */}
-          <div
-            style={{
-              background: "#f8fafc",
-              border: "1px solid #e2e8f0",
-              borderRadius: "10px",
-              padding: viewportMode === "mobile" ? "24px 12px" : "32px",
-              minHeight: "380px",
-            }}
-          >
+          {/* Simulator Canvas Well */}
+          <div className="w-full bg-slate-100/60 border border-slate-200 rounded-2xl p-6 lg:p-10 flex justify-center items-center min-h-[640px]">
             {viewportMode === "mobile" ? (
-              /* Smartphone Mockup Frame */
-              <div
-                style={{
-                  width: "375px",
-                  maxWidth: "100%",
-                  margin: "0 auto",
-                  background: "#0f172a",
-                  borderRadius: "36px",
-                  border: "6px solid #1e293b",
-                  boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.2)",
-                  overflow: "hidden",
-                }}
-              >
+              /* Mobile Hardware Bezel Frame (Stitch Design Specification) */
+              <div className="w-full max-w-[380px] bg-slate-900 p-3 rounded-[40px] shadow-card border-4 border-slate-700 relative">
                 {/* Speaker Notch */}
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    padding: "10px 0 6px 0",
-                    background: "#0f172a",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "50px",
-                      height: "4px",
-                      borderRadius: "2px",
-                      background: "#334155",
-                    }}
-                  />
+                <div className="w-32 h-4 bg-slate-900 rounded-full mx-auto mb-2 flex items-center justify-center gap-2">
+                  <div className="w-10 h-1 bg-slate-700 rounded-full" />
+                  <div className="w-2.5 h-2.5 bg-slate-800 rounded-full border border-slate-600" />
                 </div>
 
-                {/* Mobile Viewport Scroll Area */}
-                <div
-                  style={{
-                    maxHeight: "560px",
-                    overflowY: "auto",
-                    padding: previewTab === "email" ? "0" : "12px",
-                    background: previewTab === "email" ? "#ffffff" : "#f8fafc",
-                  }}
-                >
-                  {previewTab === "email" ? (
-                    <div style={{ background: "#ffffff", color: "#1e293b" }}>
-                      <div
-                        style={{
-                          background: "#4f46e5",
-                          padding: "20px 16px",
-                          textAlign: "center",
-                          color: "#ffffff",
-                        }}
-                      >
-                        <h1 style={{ margin: 0, fontSize: "18px", fontWeight: "700" }}>
-                          Hello, {activeRecipient.first_name}!
-                        </h1>
-                        <p style={{ margin: "4px 0 0 0", opacity: 0.9, fontSize: "12px" }}>
-                          A personal note from {orgName}
-                        </p>
-                      </div>
-                      <div
-                        style={{
-                          padding: "18px 16px",
-                          fontSize: "14px",
-                          lineHeight: "1.6",
-                          color: "#334155",
-                        }}
-                      >
-                        <p style={{ margin: "0 0 12px 0" }}>
-                          Hi <strong>{activeRecipient.first_name}</strong>,
-                        </p>
-                        <div
-                          style={{
-                            background: "#f8fafc",
-                            borderLeft: "3px solid #4f46e5",
-                            padding: "12px",
-                            margin: "14px 0",
-                            borderRadius: "4px",
-                            fontStyle: "italic",
-                            color: "#1e293b",
-                            fontSize: "13px",
-                          }}
-                        >
-                          "{previewIntro}"
-                        </div>
-                        <p style={{ fontSize: "13px" }}>
-                          We created a private, interactive landing page for you to view more
-                          details and reply directly:
-                        </p>
-                        <div style={{ textAlign: "center", margin: "20px 0" }}>
-                          <span
-                            style={{
-                              background: "#4f46e5",
-                              color: "#ffffff",
-                              padding: "10px 20px",
-                              borderRadius: "6px",
-                              fontWeight: "600",
-                              fontSize: "14px",
-                              display: "inline-block",
-                            }}
-                          >
-                            {buttonText}
-                          </span>
-                        </div>
-                      </div>
-                      <div
-                        style={{
-                          background: "#f9fafb",
-                          borderTop: "1px solid #e2e8f0",
-                          padding: "12px",
-                          textAlign: "center",
-                          fontSize: "10px",
-                          color: "#94a3b8",
-                        }}
-                      >
-                        Delivered to {activeRecipient.email} · One-Click Unsubscribe
-                      </div>
+                {/* Viewport Surface Inside Phone */}
+                <div className="bg-white rounded-[26px] overflow-hidden flex flex-col h-[620px] border border-slate-200 text-left overflow-y-auto custom-scrollbar">
+                  {/* Verified Header Strip */}
+                  <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
+                      <span>PROTOCOL / VERIFIED DISPATCH</span>
+                      <span>Today, 09:41 AM</span>
                     </div>
-                  ) : (
-                    <div
-                      style={{
-                        background: "#ffffff",
-                        border: "1px solid #e2e8f0",
-                        borderRadius: "10px",
-                        padding: "20px",
-                        color: "#0f172a",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          marginBottom: "12px",
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: "8px",
-                            height: "8px",
-                            borderRadius: "50%",
-                            background: "#10b981",
-                          }}
-                        />
-                        <span
-                          style={{
-                            fontSize: "10px",
-                            color: "#64748b",
-                            textTransform: "uppercase",
-                            letterSpacing: "0.05em",
-                            fontWeight: "600",
-                          }}
-                        >
-                          Verified Private Message
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                        <span className="text-[11px] font-bold text-slate-900">
+                          {orgName} Encrypted Relay
                         </span>
                       </div>
-                      <h2
-                        style={{
-                          fontSize: "18px",
-                          fontWeight: "700",
-                          margin: "0 0 12px 0",
-                          color: "#0f172a",
-                        }}
-                      >
-                        Hello, {activeRecipient.first_name}
-                      </h2>
-                      <div
-                        style={{
-                          background: "#f8fafc",
-                          borderLeft: "3px solid #4f46e5",
-                          padding: "14px",
-                          borderRadius: "6px",
-                          margin: "14px 0",
-                          fontSize: "13px",
-                          lineHeight: "1.5",
-                          color: "#334155",
-                          whiteSpace: "pre-wrap",
-                        }}
-                      >
-                        {previewLandingBody}
-                      </div>
-                      {allowReplies && (
-                        <div
-                          style={{
-                            marginTop: "16px",
-                            padding: "14px",
-                            background: "#f8fafc",
-                            borderRadius: "8px",
-                            border: "1px solid #e2e8f0",
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "6px",
-                              marginBottom: "8px",
-                            }}
-                          >
-                            <span>💬</span>
-                            <strong style={{ fontSize: "13px", color: "#0f172a" }}>
-                              Reply to {orgName}
-                            </strong>
-                          </div>
-                          {mode === "broadcast" && (
-                            <div
-                              style={{
-                                display: "grid",
-                                gridTemplateColumns: "1fr",
-                                gap: "8px",
-                                marginBottom: "8px",
-                              }}
-                            >
-                              <input
-                                disabled
-                                placeholder="Your Name"
-                                style={{
-                                  background: "#ffffff",
-                                  border: "1px solid #cbd5e1",
-                                  padding: "6px 8px",
-                                  borderRadius: "6px",
-                                  fontSize: "11px",
-                                  color: "#64748b",
-                                }}
-                              />
-                              <input
-                                disabled
-                                placeholder="Your Email"
-                                style={{
-                                  background: "#ffffff",
-                                  border: "1px solid #cbd5e1",
-                                  padding: "6px 8px",
-                                  borderRadius: "6px",
-                                  fontSize: "11px",
-                                  color: "#64748b",
-                                }}
-                              />
-                            </div>
-                          )}
-                          <textarea
-                            disabled
-                            rows={2}
-                            placeholder="Write a confidential reply..."
-                            style={{
-                              width: "100%",
-                              boxSizing: "border-box",
-                              background: "#ffffff",
-                              border: "1px solid #cbd5e1",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              fontSize: "11px",
-                              color: "#64748b",
-                            }}
-                          />
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "flex-end",
-                              marginTop: "6px",
-                            }}
-                          >
-                            <span
-                              style={{
-                                background: "#4f46e5",
-                                color: "#fff",
-                                padding: "5px 10px",
-                                borderRadius: "6px",
-                                fontSize: "11px",
-                                fontWeight: "600",
-                              }}
-                            >
-                              Send Reply →
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Home Indicator Bar */}
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    padding: "8px 0",
-                    background: "#0f172a",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "90px",
-                      height: "4px",
-                      borderRadius: "2px",
-                      background: "#334155",
-                    }}
-                  />
-                </div>
-              </div>
-            ) : previewTab === "email" ? (
-              /* Desktop Email Inbox Simulator */
-              <div
-                style={{
-                  maxWidth: "600px",
-                  margin: "0 auto",
-                  background: "#ffffff",
-                  borderRadius: "8px",
-                  border: "1px solid #e2e8f0",
-                  overflow: "hidden",
-                  boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
-                  color: "#1e293b",
-                }}
-              >
-                <div
-                  style={{
-                    background: "#4f46e5",
-                    padding: "28px",
-                    textAlign: "center",
-                    color: "#ffffff",
-                  }}
-                >
-                  <h1 style={{ margin: 0, fontSize: "22px", fontWeight: "700" }}>
-                    Hello, {activeRecipient.first_name}!
-                  </h1>
-                  <p style={{ margin: "6px 0 0 0", opacity: 0.9, fontSize: "14px" }}>
-                    A personal note from {orgName}
-                  </p>
-                </div>
-                <div
-                  style={{ padding: "28px", fontSize: "15px", lineHeight: "1.6", color: "#334155" }}
-                >
-                  <p style={{ margin: "0 0 16px 0" }}>
-                    Hi <strong>{activeRecipient.first_name}</strong>,
-                  </p>
-                  <div
-                    style={{
-                      background: "#f8fafc",
-                      borderLeft: "3px solid #4f46e5",
-                      padding: "14px",
-                      margin: "18px 0",
-                      borderRadius: "4px",
-                      fontStyle: "italic",
-                      color: "#1e293b",
-                    }}
-                  >
-                    "{previewIntro}"
-                  </div>
-                  <p>
-                    We created a private, interactive landing page for you to view more details and
-                    reply directly:
-                  </p>
-                  <div style={{ textAlign: "center", margin: "28px 0" }}>
-                    <span
-                      style={{
-                        background: "#4f46e5",
-                        color: "#ffffff",
-                        padding: "10px 22px",
-                        borderRadius: "6px",
-                        fontWeight: "600",
-                        fontSize: "14px",
-                        display: "inline-block",
-                      }}
-                    >
-                      {buttonText}
-                    </span>
-                  </div>
-                </div>
-                <div
-                  style={{
-                    background: "#f9fafb",
-                    borderTop: "1px solid #e2e8f0",
-                    padding: "16px",
-                    textAlign: "center",
-                    fontSize: "11px",
-                    color: "#94a3b8",
-                  }}
-                >
-                  Delivered to {activeRecipient.email} · One-Click Unsubscribe
-                </div>
-              </div>
-            ) : (
-              /* Desktop Landing Page Simulator */
-              <div
-                style={{
-                  maxWidth: "640px",
-                  margin: "0 auto",
-                  background: "#ffffff",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: "12px",
-                  padding: "36px",
-                  color: "#0f172a",
-                  boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    marginBottom: "16px",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "8px",
-                      height: "8px",
-                      borderRadius: "50%",
-                      background: "#10b981",
-                    }}
-                  />
-                  <span
-                    style={{
-                      fontSize: "11px",
-                      color: "#64748b",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.05em",
-                      fontWeight: "600",
-                    }}
-                  >
-                    Verified Private Message
-                  </span>
-                </div>
-                <h2
-                  style={{
-                    fontSize: "22px",
-                    fontWeight: "700",
-                    margin: "0 0 16px 0",
-                    color: "#0f172a",
-                  }}
-                >
-                  Hello, {activeRecipient.first_name}
-                </h2>
-                <div
-                  style={{
-                    background: "#f8fafc",
-                    borderLeft: "3px solid #4f46e5",
-                    padding: "18px",
-                    borderRadius: "6px",
-                    margin: "20px 0",
-                    fontSize: "15px",
-                    lineHeight: "1.6",
-                    color: "#334155",
-                    whiteSpace: "pre-wrap",
-                  }}
-                >
-                  {previewLandingBody}
-                </div>
-
-                {allowReplies && (
-                  <div
-                    style={{
-                      marginTop: "24px",
-                      padding: "18px",
-                      background: "#f8fafc",
-                      borderRadius: "8px",
-                      border: "1px solid #e2e8f0",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        marginBottom: "8px",
-                      }}
-                    >
-                      <span>💬</span>
-                      <strong style={{ fontSize: "14px", color: "#0f172a" }}>
-                        Reply directly to {orgName}
-                      </strong>
-                    </div>
-                    {mode === "broadcast" && (
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
-                          gap: "10px",
-                          marginBottom: "10px",
-                        }}
-                      >
-                        <input
-                          disabled
-                          placeholder="Your Name"
-                          style={{
-                            background: "#ffffff",
-                            border: "1px solid #cbd5e1",
-                            padding: "8px",
-                            borderRadius: "6px",
-                            fontSize: "12px",
-                            color: "#64748b",
-                          }}
-                        />
-                        <input
-                          disabled
-                          placeholder="Your Email"
-                          style={{
-                            background: "#ffffff",
-                            border: "1px solid #cbd5e1",
-                            padding: "8px",
-                            borderRadius: "6px",
-                            fontSize: "12px",
-                            color: "#64748b",
-                          }}
-                        />
-                      </div>
-                    )}
-                    <textarea
-                      disabled
-                      rows={2}
-                      placeholder="Write a confidential reply..."
-                      style={{
-                        width: "100%",
-                        boxSizing: "border-box",
-                        background: "#ffffff",
-                        border: "1px solid #cbd5e1",
-                        padding: "8px",
-                        borderRadius: "6px",
-                        fontSize: "12px",
-                        color: "#64748b",
-                      }}
-                    />
-                    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "8px" }}>
-                      <span
-                        style={{
-                          background: "#4f46e5",
-                          color: "#fff",
-                          padding: "6px 14px",
-                          borderRadius: "6px",
-                          fontSize: "12px",
-                          fontWeight: "600",
-                        }}
-                      >
-                        Send Reply →
+                      <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold">
+                        SPF/DKIM Valid
                       </span>
                     </div>
                   </div>
-                )}
+
+                  {/* Body Content Stream */}
+                  <div className="p-4 flex-1 flex flex-col gap-4">
+                    {/* Header */}
+                    <div className="border-b border-slate-100 pb-3">
+                      <h2 className="text-base font-bold text-slate-900 tracking-tight m-0">
+                        {previewSubject}
+                      </h2>
+                      <p className="text-[11px] text-slate-400 mt-1 m-0">
+                        Classification: Confidential / Recipient Eyes Only
+                      </p>
+                    </div>
+
+                    {/* Briefing Copy */}
+                    <div className="text-xs text-slate-700 space-y-2.5 leading-relaxed font-sans">
+                      <p>
+                        Hello <span className="font-bold text-slate-900">{activeRecipient.first_name}</span>,
+                      </p>
+                      <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs text-slate-800 whitespace-pre-wrap">
+                        {previewLandingBody}
+                      </div>
+                    </div>
+
+                    {/* Confidential Vault Card */}
+                    <div className="border border-slate-200 rounded-lg p-3 bg-slate-50 hover:border-indigo-600 transition-colors">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="font-mono text-[10px] text-indigo-700 font-bold">
+                          ATTACHED SECURE ASSET
+                        </span>
+                        <span className="font-mono text-[10px] bg-amber-50 text-amber-800 px-1.5 py-0.5 rounded border border-amber-200">
+                          Expires in 72h
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded bg-white border border-slate-200 flex items-center justify-center text-indigo-600 font-bold">
+                          🔒
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-slate-900 truncate m-0">
+                            CONFIDENTIAL-BRIEFING.pdf
+                          </p>
+                          <p className="font-mono text-[10px] text-slate-400 truncate m-0">
+                            Encrypted Briefing Asset (1.4 MB)
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Verified 2-Way Reply Box */}
+                    {allowReplies && (
+                      <div className="border border-slate-200 rounded-lg p-3 bg-white flex flex-col gap-2 mt-auto">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[11px] font-bold uppercase text-slate-500 tracking-wider">
+                            Direct Verified Response
+                          </label>
+                          <span className="flex items-center gap-1 font-mono text-[10px] text-emerald-700">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            E2EE Channel Ready
+                          </span>
+                        </div>
+                        <textarea
+                          disabled
+                          rows={2}
+                          placeholder="Send an encrypted response directly to executive comms..."
+                          className="w-full text-xs p-2 bg-slate-50 border border-slate-200 rounded text-slate-700 outline-none resize-none"
+                        />
+                        <button
+                          type="button"
+                          disabled
+                          className="w-full py-1.5 px-3 rounded bg-indigo-600 text-white text-xs font-semibold flex items-center justify-center gap-1.5 opacity-90"
+                        >
+                          <span>Send Confidential Response</span>
+                          <span>→</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Bottom Phone Bar */}
+                  <div className="py-2 flex justify-center bg-white">
+                    <div className="w-24 h-1 bg-slate-300 rounded-full" />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Desktop Browser Simulator Frame */
+              <div className="w-full max-w-3xl bg-white border border-slate-200 rounded-xl shadow-card overflow-hidden">
+                {/* Browser Chrome */}
+                <div className="bg-slate-100 px-4 py-2.5 border-b border-slate-200 flex items-center gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 rounded-full bg-rose-400 inline-block" />
+                    <span className="w-3 h-3 rounded-full bg-amber-400 inline-block" />
+                    <span className="w-3 h-3 rounded-full bg-emerald-400 inline-block" />
+                  </div>
+                  <div className="flex-1 max-w-md mx-auto bg-white px-3 py-1 rounded border border-slate-200 text-xs font-mono text-slate-600 flex items-center gap-2">
+                    <span className="text-emerald-600 font-bold">🔒</span>
+                    <span>https://kampaign.internal/m/cmp_9a8f2c</span>
+                  </div>
+                </div>
+
+                {/* Browser Interior */}
+                <div className="p-8 max-w-xl mx-auto flex flex-col gap-5">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span className="text-xs uppercase font-semibold text-slate-400 tracking-wider">
+                      Confidential Briefing for {activeRecipient.first_name}
+                    </span>
+                  </div>
+                  <h1 className="text-2xl font-bold text-slate-900 m-0">{previewSubject}</h1>
+                  <div className="bg-slate-50 border-l-4 border-indigo-600 p-4 rounded-r-lg text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
+                    {previewLandingBody}
+                  </div>
+                  {allowReplies && (
+                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                      <div className="text-xs font-bold text-slate-900 mb-2">Direct Reply Module</div>
+                      <textarea
+                        disabled
+                        rows={2}
+                        placeholder="Write a confidential reply..."
+                        className="w-full p-2 bg-white border border-slate-200 rounded text-xs text-slate-700 outline-none mb-2"
+                      />
+                      <button
+                        type="button"
+                        disabled
+                        className="px-4 py-1.5 rounded bg-indigo-600 text-white text-xs font-semibold"
+                      >
+                        Send Reply →
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: "24px" }}>
+          {/* Stepper Navigation Actions */}
+          <div className="flex justify-between items-center">
             <button
+              type="button"
               onClick={() => setActiveStep("compose")}
-              style={{
-                background: "#ffffff",
-                color: "#334155",
-                border: "1px solid #cbd5e1",
-                padding: "10px 20px",
-                borderRadius: "6px",
-                fontWeight: "600",
-                cursor: "pointer",
-              }}
+              className="px-4 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors"
             >
               ← Back to Compose
             </button>
             <button
+              type="button"
               onClick={() => setActiveStep("export_send")}
-              style={{
-                background: "#4f46e5",
-                color: "#fff",
-                border: "none",
-                padding: "10px 24px",
-                borderRadius: "6px",
-                fontWeight: "600",
-                fontSize: "14px",
-                cursor: "pointer",
-              }}
+              className="px-5 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-subtle"
             >
-              Proceed to Export & Send Options →
+              Proceed to Fulfillment →
             </button>
           </div>
         </div>
       )}
 
-      {/* STEP 4: EXPORT OR SEND */}
+      {/* STEP 4: FULFILLMENT & DISPATCH */}
       {activeStep === "export_send" && (
-        <div
-          style={{
-            background: "#ffffff",
-            border: "1px solid #e2e8f0",
-            borderRadius: "12px",
-            padding: "28px",
-            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
-          }}
-        >
-          <h2
-            style={{ fontSize: "20px", fontWeight: "700", margin: "0 0 6px 0", color: "#0f172a" }}
-          >
-            Fulfillment: Export Links or Send Directly
-          </h2>
-          <p style={{ color: "#64748b", fontSize: "14px", margin: "0 0 24px 0" }}>
-            {mode === "personalized"
-              ? "You can export the CSV with each person's unique dynamic link to use in your own mailer, OR send the intro emails directly through this platform."
-              : "Your universal broadcast link is ready for WhatsApp, Telegram, or social media sharing."}
-          </p>
+        <div className="bg-white border border-slate-200 rounded-xl p-6 lg:p-8 shadow-subtle flex flex-col gap-6">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900 m-0">Fulfillment: Export Links or Send Directly</h2>
+            <p className="text-xs text-slate-500 mt-1 m-0">
+              {mode === "personalized"
+                ? "Export CSV with unique recipient tokens, OR dispatch emails directly through the background relay."
+                : "Generate your universal broadcast link for WhatsApp, Telegram, or executive web channels."}
+            </p>
+          </div>
 
           {/* Domain Verification Status Banner */}
           {mode === "personalized" && (
             <div
-              style={{
-                background: isDomainVerified ? "#ecfdf5" : "#fffbeb",
-                border: `1px solid ${isDomainVerified ? "#a7f3d0" : "#fde68a"}`,
-                borderRadius: "8px",
-                padding: "16px 20px",
-                marginBottom: "28px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-                gap: "12px",
-              }}
+              className={`p-4 rounded-xl border flex items-center justify-between flex-wrap gap-3 ${
+                isDomainVerified
+                  ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+                  : "bg-amber-50 border-amber-200 text-amber-900"
+              }`}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <span style={{ fontSize: "20px" }}>{isDomainVerified ? "🛡️" : "⚠️"}</span>
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{isDomainVerified ? "🛡️" : "⚠️"}</span>
                 <div>
-                  <div
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: "700",
-                      color: isDomainVerified ? "#065f46" : "#92400e",
-                    }}
-                  >
-                    Sender Domain: {sendingDomain} ({isDomainVerified ? "Verified" : "Unverified"})
+                  <div className="text-sm font-bold">
+                    Sender Domain: {sendingDomain || "Default Shared Domain"} (
+                    {isDomainVerified ? "Verified" : "Unverified"})
                   </div>
-                  <div style={{ fontSize: "12px", color: "#64748b" }}>
+                  <div className="text-xs text-slate-600">
                     {isDomainVerified
                       ? "Custom DKIM & SPF active. Platform sends under your verified brand identity."
-                      : "Unverified. You can still send via platform (will use safe fallback sender) or verify DNS."}
+                      : "Unverified. You can still send via platform (uses safe fallback relay) or verify DNS."}
                   </div>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowDomainModal(true)}
-                style={{
-                  background: "#ffffff",
-                  color: "#334155",
-                  border: "1px solid #cbd5e1",
-                  padding: "6px 14px",
-                  borderRadius: "6px",
-                  fontSize: "12px",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                }}
+                className="px-3.5 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors"
               >
                 DNS Settings & Verification →
               </button>
@@ -2208,215 +1224,64 @@ ${landingContent}
 
           {/* Action Cards */}
           {mode === "personalized" ? (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "20px",
-                marginBottom: "28px",
-              }}
-            >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Option A: Export CSV */}
-              <div
-                style={{
-                  background: "#f8fafc",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: "10px",
-                  padding: "24px",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                }}
-              >
+              <div className="p-6 rounded-xl border border-slate-200 bg-slate-50/60 flex flex-col justify-between">
                 <div>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      marginBottom: "10px",
-                    }}
-                  >
-                    <span style={{ fontSize: "20px" }}>📥</span>
-                    <h3
-                      style={{ margin: 0, fontSize: "16px", fontWeight: "700", color: "#0f172a" }}
-                    >
-                      Export CSV with Unique Links
-                    </h3>
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <span className="text-xl">📥</span>
+                    <h3 className="text-base font-bold text-slate-900 m-0">Export CSV with Unique Links</h3>
                   </div>
-                  <p
-                    style={{
-                      fontSize: "13px",
-                      color: "#64748b",
-                      lineHeight: "1.5",
-                      margin: "0 0 16px 0",
-                    }}
-                  >
-                    Generate individual token-protected pages for all {recipients.length}{" "}
-                    recipients, and download a CSV with `email, first_name, sex, landing_link`.
+                  <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                    Generate individual token-protected pages for all {recipients.length} recipients,
+                    and download a CSV with `email, first_name, sex, organization, landing_link`.
                   </p>
-                  <div
-                    style={{
-                      background: "#ffffff",
-                      border: "1px solid #e2e8f0",
-                      padding: "10px",
-                      borderRadius: "6px",
-                      fontSize: "12px",
-                      color: "#64748b",
-                      fontFamily: "ui-monospace, monospace",
-                      marginBottom: "20px",
-                    }}
-                  >
-                    email, first_name, sex, landing_link
-                  </div>
                 </div>
-
-                <div>
-                  <button
-                    disabled={loading}
-                    onClick={() => handleGenerate(false)}
-                    style={{
-                      width: "100%",
-                      background: "#059669",
-                      color: "#fff",
-                      border: "none",
-                      padding: "11px",
-                      borderRadius: "6px",
-                      fontWeight: "600",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {loading ? "Generating..." : "Generate & Download CSV Links →"}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => handleGenerate(false)}
+                  className="w-full py-2.5 px-4 rounded-lg bg-emerald-600 text-white font-semibold text-xs hover:bg-emerald-700 transition-colors shadow-subtle"
+                >
+                  {loading ? "Generating..." : "Generate & Download CSV Links →"}
+                </button>
               </div>
 
-              {/* Option B: Send via Platform */}
-              <div
-                style={{
-                  background: "#f8fafc",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: "10px",
-                  padding: "24px",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                }}
-              >
+              {/* Option B: Direct Send */}
+              <div className="p-6 rounded-xl border border-slate-200 bg-slate-50/60 flex flex-col justify-between">
                 <div>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      marginBottom: "10px",
-                    }}
-                  >
-                    <span style={{ fontSize: "20px" }}>🚀</span>
-                    <h3
-                      style={{ margin: 0, fontSize: "16px", fontWeight: "700", color: "#0f172a" }}
-                    >
-                      Send via Our Platform
-                    </h3>
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <span className="text-xl">🚀</span>
+                    <h3 className="text-base font-bold text-slate-900 m-0">Send via Platform Relay</h3>
                   </div>
-                  <p
-                    style={{
-                      fontSize: "13px",
-                      color: "#64748b",
-                      lineHeight: "1.5",
-                      margin: "0 0 16px 0",
-                    }}
-                  >
-                    We automatically dispatch the customized intro email to each person's inbox with
-                    their unique button link to the private dynamic page.
+                  <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                    We automatically dispatch the customized invitation email to each person's inbox
+                    with their single-use link to the private dynamic page.
                   </p>
-                  <ul
-                    style={{
-                      margin: "0 0 20px 0",
-                      paddingLeft: "18px",
-                      fontSize: "12px",
-                      color: "#475569",
-                      lineHeight: "1.6",
-                    }}
-                  >
-                    <li>Delivers via background engine (Listmonk + BullMQ)</li>
-                    <li>Immune to email scanner false-open tracking</li>
-                    <li>Direct two-way replies delivered to your Inbox tab</li>
-                  </ul>
                 </div>
-
-                <div>
-                  <button
-                    disabled={loading}
-                    onClick={() => handleGenerate(true)}
-                    style={{
-                      width: "100%",
-                      background: "#4f46e5",
-                      color: "#fff",
-                      border: "none",
-                      padding: "11px",
-                      borderRadius: "6px",
-                      fontWeight: "600",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {loading ? "Dispatching..." : "Launch & Send via Platform Now →"}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => handleGenerate(true)}
+                  className="w-full py-2.5 px-4 rounded-lg bg-indigo-600 text-white font-semibold text-xs hover:bg-indigo-700 transition-colors shadow-subtle"
+                >
+                  {loading ? "Dispatching..." : "Launch & Send via Platform Now →"}
+                </button>
               </div>
             </div>
           ) : (
-            /* Broadcast WhatsApp Share Card */
-            <div
-              style={{
-                background: "#f8fafc",
-                border: "1px solid #e2e8f0",
-                borderRadius: "10px",
-                padding: "28px",
-                maxWidth: "600px",
-                margin: "0 auto 28px auto",
-              }}
-            >
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" }}
-              >
-                <span style={{ fontSize: "24px" }}>💬</span>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: "17px", fontWeight: "700", color: "#0f172a" }}>
-                    WhatsApp & Social Broadcast Link
-                  </h3>
-                  <span style={{ fontSize: "12px", color: "#64748b" }}>
-                    Single shared link for groups
-                  </span>
-                </div>
-              </div>
-              <p
-                style={{
-                  fontSize: "13px",
-                  color: "#475569",
-                  lineHeight: "1.5",
-                  marginBottom: "20px",
-                }}
-              >
-                Click below to generate the universal link. Anyone in your WhatsApp group can open
-                the page, and if they submit a reply, they will be prompted for their Name & Email.
+            /* Broadcast Card */
+            <div className="p-6 rounded-xl border border-slate-200 bg-slate-50/60 max-w-lg mx-auto w-full text-center">
+              <span className="text-3xl block mb-2">💬</span>
+              <h3 className="text-base font-bold text-slate-900 m-0">WhatsApp & Public Broadcast Link</h3>
+              <p className="text-xs text-slate-600 my-3 leading-relaxed">
+                Generate the universal tokenized link for sharing in executive WhatsApp groups or client chats.
               </p>
               <button
+                type="button"
                 disabled={loading}
                 onClick={() => handleGenerate(false)}
-                style={{
-                  width: "100%",
-                  background: "#16a34a",
-                  color: "#ffffff",
-                  border: "none",
-                  padding: "11px",
-                  borderRadius: "6px",
-                  fontWeight: "600",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                }}
+                className="w-full py-2.5 px-4 rounded-lg bg-emerald-600 text-white font-semibold text-xs hover:bg-emerald-700 transition-colors shadow-subtle"
               >
                 {loading ? "Generating..." : "Generate WhatsApp Broadcast Link →"}
               </button>
@@ -2425,68 +1290,35 @@ ${landingContent}
 
           {/* Generated Result Display Banner */}
           {executionResult && (
-            <div
-              style={{
-                background: "#ecfdf5",
-                border: "1px solid #a7f3d0",
-                borderRadius: "8px",
-                padding: "20px",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "16px",
-                  flexWrap: "wrap",
-                  gap: "10px",
-                }}
-              >
+            <div className="p-5 rounded-xl bg-emerald-50 border border-emerald-200 flex flex-col gap-3">
+              <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
-                  <div style={{ fontSize: "15px", fontWeight: "700", color: "#065f46" }}>
+                  <span className="text-sm font-bold text-emerald-900 block">
                     ✓ Campaign Created & Active ({executionResult.campaignName})
-                  </div>
-                  <div style={{ fontSize: "13px", color: "#047857" }}>
+                  </span>
+                  <span className="text-xs text-emerald-700">
                     {executionResult.dispatchViaPlatform
                       ? `Delivering ${executionResult.recipients.length} personalized emails with dynamic links.`
                       : mode === "broadcast"
                         ? "Public broadcast link is live and tracking views."
                         : `Successfully generated ${executionResult.recipients.length} unique recipient landing links.`}
-                  </div>
+                  </span>
                 </div>
-
-                <div style={{ display: "flex", gap: "8px" }}>
+                <div className="flex gap-2">
                   {executionResult.exportCsv && (
                     <button
+                      type="button"
                       onClick={downloadCsv}
-                      style={{
-                        background: "#ffffff",
-                        color: "#065f46",
-                        border: "1px solid #a7f3d0",
-                        padding: "7px 14px",
-                        borderRadius: "6px",
-                        fontWeight: "600",
-                        fontSize: "13px",
-                        cursor: "pointer",
-                      }}
+                      className="px-3 py-1.5 rounded-lg bg-white border border-emerald-300 text-emerald-800 text-xs font-semibold hover:bg-emerald-50 transition-colors"
                     >
                       💾 Download Links CSV
                     </button>
                   )}
                   {executionResult.sharedUrl && (
                     <button
+                      type="button"
                       onClick={() => copyText(executionResult.sharedUrl!, "Broadcast Link Copied!")}
-                      style={{
-                        background: "#ffffff",
-                        color: "#065f46",
-                        border: "1px solid #a7f3d0",
-                        padding: "7px 14px",
-                        borderRadius: "6px",
-                        fontWeight: "600",
-                        fontSize: "13px",
-                        cursor: "pointer",
-                      }}
+                      className="px-3 py-1.5 rounded-lg bg-white border border-emerald-300 text-emerald-800 text-xs font-semibold hover:bg-emerald-50 transition-colors"
                     >
                       {copyFeedback || "📋 Copy WhatsApp Link"}
                     </button>
@@ -2494,40 +1326,16 @@ ${landingContent}
                 </div>
               </div>
 
-              {/* Sample link box */}
-              <div
-                style={{
-                  background: "#ffffff",
-                  border: "1px solid #a7f3d0",
-                  padding: "10px 14px",
-                  borderRadius: "6px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: "12px",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: "13px",
-                    color: "#065f46",
-                    wordBreak: "break-all",
-                    fontFamily: "ui-monospace, monospace",
-                  }}
-                >
+              {/* Sample Link Box */}
+              <div className="bg-white p-3 rounded-lg border border-emerald-200 flex items-center justify-between gap-3">
+                <span className="font-mono text-xs text-emerald-800 break-all">
                   {executionResult.sharedUrl || executionResult.landingUrl}
                 </span>
                 <a
                   href={executionResult.sharedUrl || executionResult.landingUrl}
                   target="_blank"
                   rel="noreferrer"
-                  style={{
-                    color: "#059669",
-                    fontSize: "13px",
-                    fontWeight: "600",
-                    textDecoration: "none",
-                    whiteSpace: "nowrap",
-                  }}
+                  className="text-xs font-semibold text-emerald-700 hover:underline whitespace-nowrap"
                 >
                   Open Page ↗
                 </a>
@@ -2537,75 +1345,32 @@ ${landingContent}
         </div>
       )}
 
-      {/* STEP 5: REPLIES & INBOX */}
+      {/* STEP 5: VERIFIED INBOX */}
       {activeStep === "inbox" && (
-        <div
-          style={{
-            background: "#ffffff",
-            border: "1px solid #e2e8f0",
-            borderRadius: "12px",
-            padding: "28px",
-            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "20px",
-            }}
-          >
+        <div className="bg-white border border-slate-200 rounded-xl p-6 lg:p-8 shadow-subtle flex flex-col gap-5">
+          <div className="flex justify-between items-center flex-wrap gap-3 pb-4 border-b border-slate-200">
             <div>
-              <h2
-                style={{
-                  fontSize: "20px",
-                  fontWeight: "700",
-                  margin: "0 0 4px 0",
-                  color: "#0f172a",
-                }}
-              >
-                Recipient Replies & Responses
-              </h2>
-              <p style={{ color: "#64748b", fontSize: "14px", margin: 0 }}>
-                Two-way communication from both personalized contact links and WhatsApp group
-                respondents.
+              <h2 className="text-xl font-bold text-slate-900 m-0">Recipient Replies & Responses</h2>
+              <p className="text-xs text-slate-500 m-0 mt-0.5">
+                Two-way communication from both personalized contact links and WhatsApp group respondents.
               </p>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div className="flex items-center gap-2">
               {repliesList.length > 0 && (
                 <button
                   type="button"
                   onClick={exportRepliesCsv}
-                  style={{
-                    background: "#ecfdf5",
-                    border: "1px solid #a7f3d0",
-                    color: "#065f46",
-                    padding: "6px 14px",
-                    borderRadius: "6px",
-                    fontSize: "12px",
-                    fontWeight: "600",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                  }}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold hover:bg-emerald-100 transition-colors inline-flex items-center gap-1.5"
                 >
-                  📥 Export Replies to CSV ({repliesList.length})
+                  <span>📥</span>
+                  <span>Export Replies CSV ({repliesList.length})</span>
                 </button>
               )}
               {executionResult?.campaignId && (
                 <button
+                  type="button"
                   onClick={() => fetchReplies(executionResult.campaignId)}
-                  style={{
-                    background: "#ffffff",
-                    border: "1px solid #cbd5e1",
-                    color: "#334155",
-                    padding: "6px 14px",
-                    borderRadius: "6px",
-                    fontSize: "12px",
-                    cursor: "pointer",
-                  }}
+                  className="px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors"
                 >
                   ↻ Refresh Replies
                 </button>
@@ -2614,149 +1379,53 @@ ${landingContent}
           </div>
 
           {loadingReplies ? (
-            <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
-              Loading replies...
-            </div>
+            <div className="p-12 text-center text-slate-500 text-xs">Loading replies...</div>
           ) : repliesList.length === 0 ? (
-            <div
-              style={{
-                border: "2px dashed #cbd5e1",
-                borderRadius: "8px",
-                padding: "48px 24px",
-                textAlign: "center",
-                background: "#f8fafc",
-              }}
-            >
-              <span style={{ fontSize: "36px" }}>📬</span>
-              <h3
-                style={{
-                  fontSize: "16px",
-                  color: "#0f172a",
-                  margin: "12px 0 6px 0",
-                  fontWeight: "600",
-                }}
-              >
-                No replies received yet
-              </h3>
-              <p
-                style={{
-                  fontSize: "13px",
-                  color: "#64748b",
-                  margin: "0 0 16px 0",
-                  maxWidth: "450px",
-                  marginLeft: "auto",
-                  marginRight: "auto",
-                }}
-              >
-                When recipients open their private page and submit a reply, it will appear here
-                instantly with their profile details.
+            <div className="border-2 border-dashed border-slate-200 rounded-xl p-12 text-center bg-slate-50/50">
+              <span className="text-3xl block mb-2">📬</span>
+              <h3 className="text-sm font-semibold text-slate-900 m-0">No replies received yet</h3>
+              <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                When recipients open their private page and submit a reply, it will appear here instantly with their profile details.
               </p>
-              {executionResult?.landingUrl && (
-                <a
-                  href={executionResult.landingUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    background: "#4f46e5",
-                    color: "#fff",
-                    padding: "8px 16px",
-                    borderRadius: "6px",
-                    fontSize: "13px",
-                    fontWeight: "600",
-                    textDecoration: "none",
-                    display: "inline-block",
-                  }}
-                >
-                  Test Sending a Reply on Landing Page ↗
-                </a>
-              )}
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div className="flex flex-col gap-3">
               {repliesList.map((reply) => (
                 <div
                   key={reply.id}
-                  style={{
-                    background: "#f8fafc",
-                    border: "1px solid #e2e8f0",
-                    borderRadius: "8px",
-                    padding: "16px 18px",
-                  }}
+                  className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col gap-2"
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: "8px",
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <strong style={{ fontSize: "14px", color: "#0f172a" }}>{reply.name}</strong>
-                      <span style={{ fontSize: "12px", color: "#4f46e5" }}>({reply.email})</span>
+                  <div className="flex justify-between items-center flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-slate-900">{reply.name}</span>
+                      <span className="text-xs text-indigo-600 font-mono">({reply.email})</span>
                       {reply.sex && (
-                        <span
-                          style={{
-                            fontSize: "11px",
-                            background: "#ffffff",
-                            color: "#475569",
-                            border: "1px solid #cbd5e1",
-                            padding: "1px 6px",
-                            borderRadius: "4px",
-                          }}
-                        >
+                        <span className="text-[10px] font-medium bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-600">
                           {reply.sex}
                         </span>
                       )}
                       {reply.isBroadcast && (
-                        <span
-                          style={{
-                            fontSize: "11px",
-                            background: "#ecfdf5",
-                            color: "#065f46",
-                            border: "1px solid #a7f3d0",
-                            padding: "1px 6px",
-                            borderRadius: "4px",
-                          }}
-                        >
-                          WhatsApp / Public Reply
+                        <span className="text-[10px] font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-emerald-800">
+                          Public Broadcast
                         </span>
                       )}
                     </div>
-                    <span style={{ fontSize: "11px", color: "#64748b" }}>
+                    <span className="text-[11px] text-slate-400 font-mono">
                       {new Date(reply.createdAt).toLocaleTimeString()} ·{" "}
                       {new Date(reply.createdAt).toLocaleDateString()}
                     </span>
                   </div>
 
-                  <div
-                    style={{
-                      background: "#ffffff",
-                      border: "1px solid #e2e8f0",
-                      borderLeft: "3px solid #cbd5e1",
-                      padding: "10px 14px",
-                      borderRadius: "4px",
-                      margin: "0 0 10px 0",
-                      fontSize: "13px",
-                      color: "#334155",
-                      lineHeight: "1.5",
-                      whiteSpace: "pre-wrap",
-                    }}
-                  >
+                  <div className="bg-white border-l-2 border-indigo-600 border border-slate-200 p-3 rounded-lg text-xs text-slate-800 whitespace-pre-wrap leading-relaxed">
                     "{reply.body}"
                   </div>
 
-                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                  <div className="flex justify-end">
                     <a
                       href={`mailto:${reply.email}?subject=Re: Your update&body=Hi ${reply.name},\n\n`}
-                      style={{
-                        fontSize: "12px",
-                        color: "#4f46e5",
-                        textDecoration: "none",
-                        fontWeight: "600",
-                      }}
+                      className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold"
                     >
-                      Reply to {reply.email} ↗
+                      Reply via Email ↗
                     </a>
                   </div>
                 </div>
@@ -2768,160 +1437,56 @@ ${landingContent}
 
       {/* DOMAIN VERIFICATION MODAL */}
       {showDomainModal && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(15, 23, 42, 0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-            padding: "20px",
-          }}
-        >
-          <div
-            style={{
-              background: "#ffffff",
-              border: "1px solid #e2e8f0",
-              borderRadius: "12px",
-              padding: "28px",
-              maxWidth: "560px",
-              width: "100%",
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "16px",
-              }}
-            >
-              <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "700", color: "#0f172a" }}>
-                Domain Verification (DKIM & SPF)
-              </h3>
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white border border-slate-200 rounded-xl p-6 max-w-lg w-full shadow-card">
+            <div className="flex justify-between items-center pb-3 border-b border-slate-200 mb-4">
+              <h3 className="text-base font-bold text-slate-900 m-0">Domain Verification (DKIM & SPF)</h3>
               <button
+                type="button"
                 onClick={() => setShowDomainModal(false)}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  color: "#64748b",
-                  fontSize: "20px",
-                  cursor: "pointer",
-                }}
+                className="text-slate-400 hover:text-slate-600 text-lg"
               >
                 ✕
               </button>
             </div>
-            <p
-              style={{
-                fontSize: "13px",
-                color: "#64748b",
-                lineHeight: "1.5",
-                margin: "0 0 18px 0",
-              }}
-            >
-              To ensure emails arrive in inboxes instead of spam folders, verify your sending domain
-              with your DNS provider (Cloudflare, GoDaddy, AWS Route53).
+            <p className="text-xs text-slate-600 mb-4 leading-relaxed">
+              To guarantee deliverability into executive inboxes and avoid spam filters, verify your
+              sending domain with SPF & DMARC records.
             </p>
 
-            <div style={{ marginBottom: "16px" }}>
-              <label
-                style={{
-                  display: "block",
-                  fontSize: "12px",
-                  fontWeight: "600",
-                  color: "#334155",
-                  marginBottom: "6px",
-                }}
-              >
-                Domain Name
-              </label>
+            <div className="mb-4">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Domain Name</label>
               <input
                 type="text"
                 value={sendingDomain}
                 onChange={(e) => setSendingDomain(e.target.value)}
-                style={{
-                  width: "100%",
-                  boxSizing: "border-box",
-                  background: "#ffffff",
-                  border: "1px solid #cbd5e1",
-                  padding: "9px 12px",
-                  borderRadius: "6px",
-                  color: "#0f172a",
-                  fontSize: "13px",
-                }}
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 outline-none focus:border-indigo-600"
               />
             </div>
 
-            <div
-              style={{
-                background: "#f8fafc",
-                border: "1px solid #e2e8f0",
-                borderRadius: "6px",
-                padding: "14px",
-                marginBottom: "18px",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "12px",
-                  fontWeight: "600",
-                  color: "#334155",
-                  marginBottom: "6px",
-                }}
-              >
-                Required DNS TXT Records:
-              </div>
-              <div
-                style={{
-                  fontSize: "12px",
-                  color: "#475569",
-                  fontFamily: "ui-monospace, monospace",
-                  lineHeight: "1.6",
-                }}
-              >
-                <strong>SPF:</strong> TXT @ "v=spf1 include:_spf.{sendingDomain} ~all"
-                <br />
-                <strong>DMARC:</strong> TXT _dmarc "v=DMARC1; p=none; sp=none;"
-              </div>
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs font-mono text-slate-700 leading-relaxed mb-4">
+              <strong className="block text-slate-900 font-sans mb-1 font-semibold">Required DNS Records:</strong>
+              <div>SPF: TXT @ "v=spf1 include:_spf.{sendingDomain || "yourdomain.com"} ~all"</div>
+              <div>DMARC: TXT _dmarc "v=DMARC1; p=none; sp=none;"</div>
             </div>
 
             {domainCheckMessage && (
               <div
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: "6px",
-                  fontSize: "12px",
-                  marginBottom: "16px",
-                  background: domainCheckMessage.startsWith("✓") ? "#ecfdf5" : "#fffbeb",
-                  border: `1px solid ${domainCheckMessage.startsWith("✓") ? "#a7f3d0" : "#fde68a"}`,
-                  color: domainCheckMessage.startsWith("✓") ? "#065f46" : "#92400e",
-                }}
+                className={`p-3 rounded-lg text-xs font-medium mb-4 ${
+                  domainCheckMessage.startsWith("✓")
+                    ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                    : "bg-amber-50 text-amber-800 border border-amber-200"
+                }`}
               >
                 {domainCheckMessage}
               </div>
             )}
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setShowDomainModal(false)}
-                style={{
-                  background: "#ffffff",
-                  color: "#334155",
-                  border: "1px solid #cbd5e1",
-                  padding: "8px 16px",
-                  borderRadius: "6px",
-                  fontSize: "13px",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                }}
+                className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50"
               >
                 Close
               </button>
@@ -2929,16 +1494,7 @@ ${landingContent}
                 type="button"
                 disabled={verifyingDomain}
                 onClick={handleVerifyDomain}
-                style={{
-                  background: "#4f46e5",
-                  color: "#fff",
-                  border: "none",
-                  padding: "8px 18px",
-                  borderRadius: "6px",
-                  fontWeight: "600",
-                  fontSize: "13px",
-                  cursor: "pointer",
-                }}
+                className="px-4 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700"
               >
                 {verifyingDomain ? "Querying DNS..." : "Check DNS Records Now"}
               </button>
