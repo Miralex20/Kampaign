@@ -1,4 +1,5 @@
 import { signIn } from "@/auth";
+import Link from "next/link";
 
 export default function SignInPage() {
   async function handleSignIn(formData: FormData) {
@@ -7,67 +8,81 @@ export default function SignInPage() {
   }
 
   return (
-    <html lang="en">
-      <head>
-        <meta charSet="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Sign In — Campaign Messaging</title>
-        <style>{`
-          * { box-sizing: border-box; margin: 0; padding: 0; }
-          body {
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f8fafc;
-            color: #0f172a;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-          }
-          .card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 2rem;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-          }
-          h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.5rem; color: #0f172a; }
-          p { color: #64748b; margin-bottom: 1.5rem; font-size: 0.9rem; line-height: 1.5; }
-          label { display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 0.4rem; }
-          input {
-            width: 100%; padding: 0.65rem 0.85rem; border-radius: 6px;
-            border: 1px solid #cbd5e1; background: #ffffff; color: #0f172a;
-            font-size: 0.95rem; margin-bottom: 1.2rem;
-          }
-          input:focus { outline: 2px solid #4f46e5; border-color: #4f46e5; }
-          button {
-            width: 100%; padding: 0.75rem; border-radius: 6px;
-            background: #4f46e5; color: white; font-size: 0.95rem;
-            border: none; cursor: pointer; font-weight: 600;
-          }
-          button:hover { background: #4338ca; }
-        `}</style>
-      </head>
-      <body>
-        <div className="card">
-          <h1>Sign in</h1>
-          <p>Enter your email address to receive a secure sign-in magic link.</p>
-          <form action={handleSignIn}>
-            <label htmlFor="email">Email address</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="you@company.com"
-              required
-              autoFocus
-            />
-            <button type="submit">Send magic link →</button>
-          </form>
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-center items-center p-6">
+      <div className="w-full max-w-md">
+        {/* Brand Header */}
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-flex items-center gap-2 mb-3 text-decoration-none">
+            <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+              KM
+            </div>
+            <span className="text-2xl font-bold tracking-tight text-slate-900">Kampaign</span>
+          </Link>
+          <p className="text-sm text-slate-500">
+            Sign in to access your organization workspace and campaigns
+          </p>
         </div>
-      </body>
-    </html>
+
+        {/* Card */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
+          <h1 className="text-xl font-bold text-slate-900 mb-1">Welcome back</h1>
+          <p className="text-sm text-slate-500 mb-6">
+            Enter your business email. We'll send you a passwordless single-use magic link.
+          </p>
+
+          <form action={handleSignIn} className="space-y-4">
+            <div>
+              <label htmlFor="email" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                Business Email Address
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="you@company.com"
+                required
+                autoFocus
+                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 text-sm transition"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-2.5 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition shadow-sm flex items-center justify-center gap-2"
+            >
+              <span>Send Magic Link</span>
+              <span>→</span>
+            </button>
+          </form>
+
+          {/* Dev Helper */}
+          {process.env.NODE_ENV !== "production" && (
+            <div className="mt-6 pt-6 border-t border-slate-100">
+              <div className="text-xs text-slate-500 mb-2 font-medium">
+                ⚡ Development Environment:
+              </div>
+              <div className="text-xs text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                Magic link emails sent locally are trapped in Mailpit at{" "}
+                <a
+                  href="http://localhost:8025"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-indigo-600 font-semibold underline"
+                >
+                  localhost:8025
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Back Link */}
+        <div className="text-center mt-6">
+          <Link href="/" className="text-xs text-slate-500 hover:text-slate-800 transition">
+            ← Back to Kampaign Home
+          </Link>
+        </div>
+      </div>
+    </div>
   );
 }

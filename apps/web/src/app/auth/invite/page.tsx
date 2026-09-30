@@ -79,7 +79,7 @@ function InviteAcceptForm() {
 
   if (loading) {
     return (
-      <div className="card text-center p-8">
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm text-center p-8">
         <div className="text-slate-500 text-sm">Verifying invitation link...</div>
       </div>
     );
@@ -87,7 +87,7 @@ function InviteAcceptForm() {
 
   if (error || !invite) {
     return (
-      <div className="card text-center p-8 space-y-4">
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm text-center p-8 space-y-4">
         <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto text-xl font-bold">
           ✕
         </div>
@@ -108,7 +108,7 @@ function InviteAcceptForm() {
   }
 
   return (
-    <div className="card p-8 space-y-6">
+    <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-8 space-y-6">
       <div>
         <div className="flex items-center gap-2 mb-2">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>

@@ -90,11 +90,10 @@ export default async function HomePage() {
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <div
                 style={{
-                  width: "10px",
-                  height: "10px",
+                  width: "8px",
+                  height: "8px",
                   borderRadius: "50%",
                   background: "#10b981",
-                  boxShadow: "0 0 0 3px rgba(16, 185, 129, 0.2)",
                 }}
               />
               <Link
@@ -246,7 +245,7 @@ export default async function HomePage() {
                   background: "#4f46e5",
                   color: "#ffffff",
                   textDecoration: "none",
-                  boxShadow: "0 1px 2px rgba(79, 70, 229, 0.2)",
+                  boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "6px",
@@ -343,7 +342,7 @@ export default async function HomePage() {
                     background: "#4f46e5",
                     color: "#ffffff",
                     textDecoration: "none",
-                    boxShadow: "0 4px 12px rgba(79, 70, 229, 0.3)",
+                    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)",
                   }}
                 >
                   Sign In to Workspace →
