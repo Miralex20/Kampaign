@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  CreateCampaignSchema,
-  UpdateCampaignSchema,
-  ListCampaignsSchema,
-} from "./campaign";
+import { CreateCampaignSchema, UpdateCampaignSchema, ListCampaignsSchema } from "./campaign";
 
 describe("Campaign Zod Schemas", () => {
   it("validates a valid CreateCampaign payload", () => {

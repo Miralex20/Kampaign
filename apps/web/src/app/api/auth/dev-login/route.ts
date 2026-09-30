@@ -9,6 +9,13 @@ import { getDb, auth_sessions, auth_users, users, organizations } from "@campaig
 import { eq } from "drizzle-orm";
 
 export async function GET(request: Request): Promise<NextResponse> {
+  if (process.env["NODE_ENV"] === "production") {
+    return NextResponse.json(
+      { error: "Developer login bypass is disabled in production environments" },
+      { status: 403 },
+    );
+  }
+
   const url = new URL(request.url);
   const redirectTo = url.searchParams.get("redirect") ?? "/";
   const email = url.searchParams.get("email") ?? "admin@campaign.local";
@@ -16,11 +23,7 @@ export async function GET(request: Request): Promise<NextResponse> {
   const db = getDb();
 
   // Find user
-  const [authUser] = await db
-    .select()
-    .from(auth_users)
-    .where(eq(auth_users.email, email))
-    .limit(1);
+  const [authUser] = await db.select().from(auth_users).where(eq(auth_users.email, email)).limit(1);
 
   if (!authUser) {
     return NextResponse.json(

@@ -82,7 +82,10 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   // In test / localhost environment, allow bypass if TEST_ALLOW_DOMAIN_VERIFY is enabled
-  if (process.env["NODE_ENV"] !== "production" && process.env["TEST_ALLOW_DOMAIN_VERIFY"] === "true") {
+  if (
+    process.env["NODE_ENV"] !== "production" &&
+    process.env["TEST_ALLOW_DOMAIN_VERIFY"] === "true"
+  ) {
     spfPassed = true;
     dmarcPassed = true;
   }
@@ -118,7 +121,10 @@ export async function POST(request: Request): Promise<NextResponse> {
       verified: false,
       checks: {
         spf: { passed: spfPassed, requirement: "TXT record starting with v=spf1 on " + domain },
-        dmarc: { passed: dmarcPassed, requirement: "TXT record starting with v=DMARC1 on _dmarc." + domain },
+        dmarc: {
+          passed: dmarcPassed,
+          requirement: "TXT record starting with v=DMARC1 on _dmarc." + domain,
+        },
       },
     },
     { status: 400 },

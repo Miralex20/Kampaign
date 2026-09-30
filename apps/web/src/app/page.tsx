@@ -8,7 +8,7 @@ export default async function HomePage() {
   const session = await auth();
   const db = getDb();
 
-  let org: (typeof organizations.$inferSelect) | null = null;
+  let org: typeof organizations.$inferSelect | null = null;
   let campaignList: Array<{
     id: string;
     name: string;
@@ -109,11 +109,48 @@ export default async function HomePage() {
               </h1>
             </div>
             <p style={{ margin: "4px 0 0 20px", color: "#64748b", fontSize: "14px" }}>
-              Personalized direct messaging, tokenized web landing pages, and verified email delivery
+              Personalized direct messaging, tokenized web landing pages, and verified email
+              delivery
             </p>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <Link
+              href="/team"
+              style={{
+                fontSize: "13px",
+                fontWeight: "600",
+                padding: "7px 12px",
+                borderRadius: "6px",
+                background: "#ffffff",
+                color: "#334155",
+                textDecoration: "none",
+                border: "1px solid #cbd5e1",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <span>👥</span> Team
+            </Link>
+            <Link
+              href="/admin"
+              style={{
+                fontSize: "13px",
+                fontWeight: "600",
+                padding: "7px 12px",
+                borderRadius: "6px",
+                background: "#4f46e5",
+                color: "#ffffff",
+                textDecoration: "none",
+                border: "1px solid #4338ca",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <span>⚙️</span> Admin Console
+            </Link>
             <Link
               href="/api/health"
               target="_blank"
@@ -161,6 +198,21 @@ export default async function HomePage() {
               >
                 ✓ {session.user.email}
               </span>
+            ) : process.env["NODE_ENV"] === "production" ? (
+              <Link
+                href="/auth/signin"
+                style={{
+                  fontSize: "13px",
+                  fontWeight: "600",
+                  padding: "7px 14px",
+                  borderRadius: "6px",
+                  background: "#4f46e5",
+                  color: "#ffffff",
+                  textDecoration: "none",
+                }}
+              >
+                Sign In →
+              </Link>
             ) : (
               <a
                 href="/api/auth/dev-login"
@@ -174,7 +226,7 @@ export default async function HomePage() {
                   textDecoration: "none",
                 }}
               >
-                1-Click Admin Session →
+                1-Click Dev Session →
               </a>
             )}
           </div>

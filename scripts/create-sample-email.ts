@@ -35,7 +35,8 @@ const customMessage = getArg(
 const subjectLine = getArg("--subject", "Special Update Just for You, {{first_name}}");
 
 const LINK_BASE_URL = process.env["LINK_BASE_URL"] ?? "http://localhost:3000";
-const DATABASE_URL = process.env["DATABASE_URL"] ?? "postgres://campaign:campaign_dev@localhost:5432/campaign_db";
+const DATABASE_URL =
+  process.env["DATABASE_URL"] ?? "postgres://campaign:campaign_dev@localhost:5432/campaign_db";
 
 async function main() {
   console.log("\n=======================================================");
@@ -52,7 +53,7 @@ async function main() {
        FROM users u 
        JOIN organizations o ON u.org_id = o.id 
        WHERE u.email = 'admin@campaign.local' 
-       LIMIT 1;`
+       LIMIT 1;`,
     );
 
     if (!userRes.rows[0]) {
@@ -81,7 +82,7 @@ async function main() {
           custom_message: customMessage,
           company: orgName,
         }),
-      ]
+      ],
     );
     const recipientId = recipientRes.rows[0].id;
 
@@ -225,7 +226,7 @@ async function main() {
         customMessage,
         pageHtmlTemplate,
         userId,
-      ]
+      ],
     );
     const campaignId = campaignRes.rows[0].id;
 
@@ -241,7 +242,7 @@ async function main() {
       VALUES ($1, $2, $3, 'dispatched', now())
       ON CONFLICT (campaign_id, recipient_id) DO NOTHING;
       `,
-      [campaignId, recipientId, tokenHash]
+      [campaignId, recipientId, tokenHash],
     );
 
     // 5. Render personalized email

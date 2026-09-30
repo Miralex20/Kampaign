@@ -53,8 +53,10 @@ async function checkRedis(): Promise<CheckResult> {
 export async function GET(): Promise<NextResponse<HealthResponse>> {
   const [db, redis] = await Promise.all([checkDb(), checkRedis()]);
 
-  const status: HealthResponse["status"] =
-    db === "ok" && redis === "ok" ? "ok" : "degraded";
+  const status: HealthResponse["status"] = db === "ok" && redis === "ok" ? "ok" : "degraded";
 
-  return NextResponse.json({ status, checks: { db, redis } }, { status: status === "ok" ? 200 : 503 });
+  return NextResponse.json(
+    { status, checks: { db, redis } },
+    { status: status === "ok" ? 200 : 503 },
+  );
 }

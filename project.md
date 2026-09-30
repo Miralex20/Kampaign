@@ -7,6 +7,7 @@ A high-deliverability confidential email teaser, dynamic personalized landing pa
 ## 1. System Overview & Core Capabilities
 
 The Campaign Messaging platform addresses low email deliverability and cold inbox fatigue by decoupling the **teaser notification** from the **content payload**:
+
 1. **Confidential Intro Email:** Dispatches a minimalist, clean notification email to the recipient's inbox containing personal greeting variables (`{{first_name}}`, `{{sex}}`) and a high-converting CTA button.
 2. **Private Dynamic Landing Page (`/m/[token]`):** The recipient clicks the secure single-use or scoped link to open an interactive, beautifully styled web briefing page personalized with their attributes.
 3. **Two-Way Reply Box:** Recipients can respond directly from the landing page. Senders receive responses in a unified real-time inbox with 1-click export to CSV.
@@ -20,13 +21,17 @@ The Campaign Messaging platform addresses low email deliverability and cold inbo
 ## 2. Authentication & New User Onboarding Lifecycle
 
 ### A. How Authentication Works in Development & Production
+
 The platform uses **Auth.js v5 (NextAuth)** with a custom Drizzle database adapter (`apps/web/src/auth.ts`):
+
 - **Strategy:** Rotating database sessions stored in PostgreSQL (`auth_sessions`). Sessions expire after 24 hours and rotate tokens on every authenticated request for replay resistance.
 - **Provider:** Passwordless Magic Link via Nodemailer.
   - In local development, outbound emails land in **Mailpit** (SMTP: `localhost:1025`, Web UI: `http://localhost:8025`).
 
 ### B. First-Time User Registration & Auto-Provisioning
+
 When a new user signs in for the first time:
+
 1. They visit `/auth/signin` and enter their work email (e.g. `alex@company.com`).
 2. Auth.js emits a verification email containing a cryptographic sign-in URL.
 3. Clicking the link triggers the `createUser` lifecycle event in `auth.ts`.
@@ -37,7 +42,9 @@ When a new user signs in for the first time:
    - Creates the `auth_users` and `auth_sessions` records.
 
 ### C. Rapid Development Login Bypass
+
 For automated testing and instantaneous dev access without checking Mailpit:
+
 - Route: `GET /api/auth/dev-login` (or `GET /api/auth/dev-login?email=custom@example.com`)
 - Reads or provisions the seeded admin user (`admin@campaign.local`), issues an active session token (`dev_session_token_campaign_2026`), sets the `authjs.session-token` cookie, and immediately redirects into the **Campaign Studio** at `/`.
 

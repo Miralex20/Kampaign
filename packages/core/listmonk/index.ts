@@ -44,11 +44,7 @@ class ListmonkHttpClient implements ListmonkClient {
     this.auth = Buffer.from(`${config.apiUser}:${config.apiToken}`).toString("base64");
   }
 
-  private async request<T>(
-    method: string,
-    path: string,
-    body?: unknown,
-  ): Promise<T> {
+  private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     const res = await fetch(`${this.baseUrl}${path}`, {
       method,
       headers: {
@@ -84,7 +80,10 @@ class ListmonkHttpClient implements ListmonkClient {
     // Look up the subscriber by email first, then delete by ID.
     const list = await this.request<{
       data: { results: Array<{ id: number }> };
-    }>("GET", `/api/subscribers?query=subscribers.email='${encodeURIComponent(subscriberEmail)}'&per_page=1`);
+    }>(
+      "GET",
+      `/api/subscribers?query=subscribers.email='${encodeURIComponent(subscriberEmail)}'&per_page=1`,
+    );
 
     const sub = list.data.results[0];
     if (!sub) return; // Not in listmonk — nothing to delete.
@@ -95,7 +94,10 @@ class ListmonkHttpClient implements ListmonkClient {
   async blocklistSubscriber(subscriberEmail: string): Promise<void> {
     const list = await this.request<{
       data: { results: Array<{ id: number }> };
-    }>("GET", `/api/subscribers?query=subscribers.email='${encodeURIComponent(subscriberEmail)}'&per_page=1`);
+    }>(
+      "GET",
+      `/api/subscribers?query=subscribers.email='${encodeURIComponent(subscriberEmail)}'&per_page=1`,
+    );
 
     const sub = list.data.results[0];
     if (!sub) return;

@@ -24,10 +24,7 @@ import { requireSession } from "@/lib/session";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function GET(
-  request: Request,
-  context: RouteContext,
-): Promise<NextResponse> {
+export async function GET(request: Request, context: RouteContext): Promise<NextResponse> {
   let session: Awaited<ReturnType<typeof requireSession>>;
   try {
     session = await requireSession();
@@ -104,15 +101,9 @@ export async function GET(
 
   // Email preview (managed_send only)
   if (campaign.campaign_mode === "managed_send") {
-    response["emailHtml"] = campaign.email_html
-      ? render(campaign.email_html, fields)
-      : null;
-    response["emailText"] = campaign.email_text
-      ? render(campaign.email_text, fields)
-      : null;
-    response["subject"] = campaign.subject
-      ? render(campaign.subject, fields)
-      : null;
+    response["emailHtml"] = campaign.email_html ? render(campaign.email_html, fields) : null;
+    response["emailText"] = campaign.email_text ? render(campaign.email_text, fields) : null;
+    response["subject"] = campaign.subject ? render(campaign.subject, fields) : null;
   }
 
   return NextResponse.json({ data: response });

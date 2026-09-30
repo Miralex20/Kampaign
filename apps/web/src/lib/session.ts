@@ -17,6 +17,7 @@ export interface AuthenticatedSession {
   orgId: string;
   role: string;
   email: string;
+  permissions?: Record<string, boolean>;
 }
 
 /**
@@ -26,15 +27,8 @@ export interface AuthenticatedSession {
 export async function requireSession(): Promise<AuthenticatedSession> {
   const session = await auth();
 
-  if (
-    !session?.user?.id ||
-    !session.user.orgId ||
-    !session.user.email
-  ) {
-    throw NextResponse.json(
-      { error: "Unauthorised" },
-      { status: 401 },
-    );
+  if (!session?.user?.id || !session.user.orgId || !session.user.email) {
+    throw NextResponse.json({ error: "Unauthorised" }, { status: 401 });
   }
 
   return {
@@ -42,5 +36,6 @@ export async function requireSession(): Promise<AuthenticatedSession> {
     orgId: session.user.orgId,
     role: session.user.role ?? "owner",
     email: session.user.email,
+    permissions: session.user.permissions ?? {},
   };
 }

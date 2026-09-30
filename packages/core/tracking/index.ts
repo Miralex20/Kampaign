@@ -52,5 +52,7 @@ export function isScanner(opts: {
   sentAt: Date | null;
   requestAt: Date;
 }): boolean {
-  return isScannerUA(opts.userAgent) || isScannerTiming(opts.deliveredAt, opts.sentAt, opts.requestAt);
+  return (
+    isScannerUA(opts.userAgent) || isScannerTiming(opts.deliveredAt, opts.sentAt, opts.requestAt)
+  );
 }

@@ -85,24 +85,25 @@ upload CSV
 
 ### Comparison
 
-| Capability | A — We Send It | B — You Send It | C — Share Anywhere |
-|---|:---:|:---:|:---:|
-| Platform sends the email | ✅ | ❌ | ❌ |
-| Personalised email body | ✅ | ❌ (sender's tool) | ❌ (no email) |
-| Personalised landing page | ✅ | ✅ | ❌ (same for all) |
-| Needs a recipient list / CSV | ✅ | ✅ | ❌ |
-| Bounce / complaint tracking | ✅ | ❌ | ❌ |
-| Suppression list auto-fed | ✅ | ❌ (manual) | ❌ |
-| Verified per-person reads | ✅ | ✅ | ❌ (aggregate only) |
-| OTP gate | ✅ | ✅ | ✅ |
-| Reply collection | ✅ | ✅ | ✅ (anonymous) |
-| Link shareable anywhere | ❌ (email only) | ❌ (per-person) | ✅ |
-| Requires sending domain setup | ✅ | ❌ | ❌ |
-| Requires new-org review | ✅ | ❌ | ❌ |
+| Capability                    | A — We Send It  |  B — You Send It   | C — Share Anywhere  |
+| ----------------------------- | :-------------: | :----------------: | :-----------------: |
+| Platform sends the email      |       ✅        |         ❌         |         ❌          |
+| Personalised email body       |       ✅        | ❌ (sender's tool) |    ❌ (no email)    |
+| Personalised landing page     |       ✅        |         ✅         |  ❌ (same for all)  |
+| Needs a recipient list / CSV  |       ✅        |         ✅         |         ❌          |
+| Bounce / complaint tracking   |       ✅        |         ❌         |         ❌          |
+| Suppression list auto-fed     |       ✅        |    ❌ (manual)     |         ❌          |
+| Verified per-person reads     |       ✅        |         ✅         | ❌ (aggregate only) |
+| OTP gate                      |       ✅        |         ✅         |         ✅          |
+| Reply collection              |       ✅        |         ✅         |   ✅ (anonymous)    |
+| Link shareable anywhere       | ❌ (email only) |  ❌ (per-person)   |         ✅          |
+| Requires sending domain setup |       ✅        |         ❌         |         ❌          |
+| Requires new-org review       |       ✅        |         ❌         |         ❌          |
 
 ---
 
 ### What listmonk owns (Mode A only)
+
 - SMTP multi-queue send engine
 - Bounce, complaint, and unsubscribe webhook ingestion (SES/Mailgun/Postmark)
 - Subscriber data store (we sync into it)
@@ -110,6 +111,7 @@ upload CSV
 - Transactional template rendering for the email body
 
 ### What this app owns
+
 - Multi-tenant org/user model and auth
 - Recipient import, consent capture, deduplication (Modes A + B; not needed for C)
 - Token generation, hashing, and verification
@@ -148,21 +150,21 @@ upload CSV
 
 ## 3. Stack
 
-| Concern | Choice | Notes |
-|---|---|---|
-| Language | TypeScript (strict) | `"strict": true` + `"noUncheckedIndexedAccess": true` |
-| App | Next.js 14 (App Router) | Dashboard, API routes, `/m/[token]` landing page |
-| Database | Postgres 16 + Drizzle ORM | SQL migrations, no magic query builders outside `packages/db` |
-| Connection pool | PgBouncer (transaction mode) | Configured in `docker-compose.yml`; max 20 app connections |
-| Queue | BullMQ on Redis 7 | **Only** used for launch orchestration (fan-out of listmonk `/api/tx` calls). NOT used for raw SMTP. |
-| Worker | Separate Node process | Long-running; graceful shutdown via `SIGTERM` handler |
-| Email delivery | **listmonk** (self-hosted) | Called via `ListmonkClient` interface; never import listmonk SDK |
-| Auth | Auth.js v5 (email magic-link) | Sessions rotate on every request; max age 24 h |
-| Validation | Zod on every API boundary | Coerce and strip unknown keys |
-| Tests | Vitest (unit + integration) | Integration tests use a dedicated test DB with transaction rollback isolation |
-| E2E | Playwright | Mail sink (Mailpit) for full flow in CI |
-| Tooling | pnpm workspaces, ESLint, Prettier, GitHub Actions CI | |
-| Observability | Sentry (errors), Pino (structured logs), Prometheus metrics endpoint | |
+| Concern         | Choice                                                               | Notes                                                                                                |
+| --------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Language        | TypeScript (strict)                                                  | `"strict": true` + `"noUncheckedIndexedAccess": true`                                                |
+| App             | Next.js 14 (App Router)                                              | Dashboard, API routes, `/m/[token]` landing page                                                     |
+| Database        | Postgres 16 + Drizzle ORM                                            | SQL migrations, no magic query builders outside `packages/db`                                        |
+| Connection pool | PgBouncer (transaction mode)                                         | Configured in `docker-compose.yml`; max 20 app connections                                           |
+| Queue           | BullMQ on Redis 7                                                    | **Only** used for launch orchestration (fan-out of listmonk `/api/tx` calls). NOT used for raw SMTP. |
+| Worker          | Separate Node process                                                | Long-running; graceful shutdown via `SIGTERM` handler                                                |
+| Email delivery  | **listmonk** (self-hosted)                                           | Called via `ListmonkClient` interface; never import listmonk SDK                                     |
+| Auth            | Auth.js v5 (email magic-link)                                        | Sessions rotate on every request; max age 24 h                                                       |
+| Validation      | Zod on every API boundary                                            | Coerce and strip unknown keys                                                                        |
+| Tests           | Vitest (unit + integration)                                          | Integration tests use a dedicated test DB with transaction rollback isolation                        |
+| E2E             | Playwright                                                           | Mail sink (Mailpit) for full flow in CI                                                              |
+| Tooling         | pnpm workspaces, ESLint, Prettier, GitHub Actions CI                 |                                                                                                      |
+| Observability   | Sentry (errors), Pino (structured logs), Prometheus metrics endpoint |                                                                                                      |
 
 ---
 
@@ -191,6 +193,7 @@ upload CSV
 ```
 
 **Rules:**
+
 - `packages/core/*` must have zero framework imports. Pure TypeScript, Node built-ins only.
 - `packages/db` exports typed query helpers; no raw SQL strings outside it.
 - No circular dependencies between packages.
@@ -390,6 +393,7 @@ otp_codes (
 ```
 
 ### Indexes (add in same migration)
+
 ```sql
 create index on messages (token_hash);
 create index on messages (campaign_id, status);
@@ -401,9 +405,10 @@ create index on campaigns (universal_token_hash) where universal_token_hash is n
 ```
 
 ### Design decisions baked in
-- **Bounce types:** `bounced` with `bounce_type=hard` → permanent suppression. `bounce_type=soft` → log event, do NOT suppress (mailbox-full is temporary). This distinction is resolved from the listmonk webhook payload. *(Mode A only)*
-- **Cross-org suppression:** suppression is per-org. A complaint registered against org A does not suppress org B. *(Mode A only; Mode B has manual suppression only; Mode C has no suppression)*
-- **Recipient deletion (GDPR):** soft-delete via `deleted_at`. On erasure request, null out PII columns (`email → deleted+[uuid]@erased`, `first_name → null`, `fields → {}`), set `deleted_at`, remove from listmonk via their subscriber delete API. Message/event rows are retained for audit but all PII columns in `recipients` are erased. *(Modes A/B; Mode C has no PII)*
+
+- **Bounce types:** `bounced` with `bounce_type=hard` → permanent suppression. `bounce_type=soft` → log event, do NOT suppress (mailbox-full is temporary). This distinction is resolved from the listmonk webhook payload. _(Mode A only)_
+- **Cross-org suppression:** suppression is per-org. A complaint registered against org A does not suppress org B. _(Mode A only; Mode B has manual suppression only; Mode C has no suppression)_
+- **Recipient deletion (GDPR):** soft-delete via `deleted_at`. On erasure request, null out PII columns (`email → deleted+[uuid]@erased`, `first_name → null`, `fields → {}`), set `deleted_at`, remove from listmonk via their subscriber delete API. Message/event rows are retained for audit but all PII columns in `recipients` are erased. _(Modes A/B; Mode C has no PII)_
 - **`expires_at` precedence (Modes A/B):** message-level `expires_at` takes precedence over `campaigns.expires_at`. If both null, link never expires.
 - **`expires_at` for Mode C:** `campaigns.expires_at` only. If null, link never expires. After expiry, the landing page shows the `expired` page.
 - **`campaign_mode` is immutable after first launch.** Changing it could invalidate existing tokens. Enforced in the API: PATCH returns 409 if `campaign_mode` changes post-launch.
@@ -422,6 +427,7 @@ Token hash  = SHA-256(raw token)           → 32 bytes, stored as bytea
 ```
 
 **Lifecycle:**
+
 1. `newToken()` called inside the launch transaction.
 2. `hashToken(raw)` computed immediately.
 3. Hash written to `messages.token_hash`.
@@ -430,6 +436,7 @@ Token hash  = SHA-256(raw token)           → 32 bytes, stored as bytea
 6. The raw token appears only inside the emitted email link and briefly in worker memory during step 5.
 
 **Verification at landing page:**
+
 1. Extract token from URL param.
 2. Compute `SHA-256(token)`.
 3. Query `messages where token_hash = $1`.
@@ -446,6 +453,7 @@ Add `TOKEN_ENCRYPTION_KEY` to environment variables (32 random bytes, base64-enc
 > to campaigns with `send_mode = 'managed'`.
 
 ### How we use listmonk
+
 - **One transactional template** in listmonk: minimal HTML wrapper that inserts the landing page link, name teaser, and preheader. Personalisation in the email body uses `{{first_name}}`, `{{preheader}}`; all deeper personalisation happens on the landing page.
 - **`subscriber_mode: external`** on `/api/tx` calls. This means listmonk does not require recipients to exist in its subscriber store. We pass `subscriber_emails` and inject personalised data via the `data` map (`{{ .Tx.Data.link }}`, `{{ .Tx.Data.first_name }}`, `{{ .Tx.Data.preheader }}`).
 - **Why `external` mode:** avoids a synchronisation problem. We are the source of truth for recipients. We do not need to upsert into listmonk's subscribers table on every launch.
@@ -453,6 +461,7 @@ Add `TOKEN_ENCRYPTION_KEY` to environment variables (32 random bytes, base64-enc
 - **Rate limiting:** `LISTMONK_DISPATCH_CONCURRENCY` controls parallel `/api/tx` calls per worker. listmonk itself enforces its own SMTP throughput. These are independent layers.
 
 ### ListmonkClient interface (lives in `packages/core/listmonk/`)
+
 ```ts
 export interface ListmonkClient {
   sendTransactional(input: {
@@ -473,6 +482,7 @@ export interface ListmonkClient {
 No other file outside `packages/core/listmonk/` may import this interface's implementation.
 
 ### What M4 worker does (replaces old BullMQ SMTP worker)
+
 1. Dequeue job (payload: `{ messageId, encryptedToken }`).
 2. Load message row. If status ≠ `pending` → skip (idempotency).
 3. Check suppression (our table). If suppressed → update status, log event, ack.
@@ -490,6 +500,7 @@ No other file outside `packages/core/listmonk/` may import this interface's impl
 ### M0 — Scaffold and tooling
 
 **Tasks**
+
 - [ ] Create pnpm monorepo matching section 4 layout exactly.
 - [ ] TypeScript: `"strict": true`, `"noUncheckedIndexedAccess": true`, path aliases per package.
 - [ ] ESLint (`@typescript-eslint/recommended`, `import/no-cycle`), Prettier, shared config packages.
@@ -502,6 +513,7 @@ No other file outside `packages/core/listmonk/` may import this interface's impl
 - [ ] Health endpoint at `GET /api/health`: checks DB connectivity and Redis connectivity; returns `{ status: "ok" | "degraded", checks: { db, redis } }`.
 
 **Acceptance**
+
 - `pnpm lint && pnpm typecheck && pnpm test` passes on a clean clone with only `.env.example` values.
 - `docker compose up` produces: Postgres accepting connections, Redis accepting connections, listmonk UI accessible at `localhost:9000`, Mailpit UI at `localhost:8025`.
 - `GET /api/health` returns `200 { status: "ok" }` with both checks passing.
@@ -512,6 +524,7 @@ No other file outside `packages/core/listmonk/` may import this interface's impl
 ### M1 — Data layer and core library
 
 **Tasks**
+
 - [ ] `packages/db`: Drizzle schema matching section 6, first SQL migration, rollback migration, typed query helpers (no raw SQL strings in the app layer).
 - [ ] `packages/core/tokens`:
   - `newToken()` → 24 random bytes, base64url encoded.
@@ -532,6 +545,7 @@ No other file outside `packages/core/listmonk/` may import this interface's impl
 - [ ] `packages/core/suppression`: `isSuppressed(db, orgId, email)`, `suppress(db, orgId, email, reason, bounceType?)`. Both operate inside the caller's transaction if one is provided.
 
 **Unit test requirements (must exist before any package is imported by the app)**
+
 - Tokens: 100 000 `newToken()` calls produce a `Set` of size 100 000 (no collisions).
 - Tokens: `hashToken` is deterministic; same input → same 32-byte output every time.
 - Tokens: `safeVerify` returns true for correct raw token, false for any mutation (1 char off, wrong length, empty).
@@ -545,6 +559,7 @@ No other file outside `packages/core/listmonk/` may import this interface's impl
 - Suppression: `isSuppressed` is case-insensitive (`ALICE@EXAMPLE.COM` matches `alice@example.com`).
 
 **Acceptance**
+
 - All unit tests above pass.
 - Migrations apply cleanly to an empty Postgres database.
 - Rollback migration leaves the database in the state before the migration.
@@ -554,6 +569,7 @@ No other file outside `packages/core/listmonk/` may import this interface's impl
 ### M2 — Auth, organisations, recipient import
 
 **Tasks**
+
 - [ ] Auth.js v5 magic-link: email → one-time link → session. Session max age 24 h, rotates on every request.
 - [ ] First login: create `organizations` row (name from email domain, `review_state = 'pending'`) and `users` row in a single transaction. Subsequent logins for the same email → fetch existing user.
 - [ ] Row-level scoping middleware: every authenticated API handler receives `orgId` from the validated session only — never from a request body or URL param.
@@ -567,6 +583,7 @@ No other file outside `packages/core/listmonk/` may import this interface's impl
 - [ ] Import UI: upload CSV → column mapping (email required, first_name optional, custom fields optional) → consent declaration checkbox + source text → validation summary → download rejected-rows link.
 
 **Acceptance**
+
 - Integration test: user in org A cannot read org B's recipients (`GET /api/recipients` returns org A's rows only regardless of any `orgId` param passed in query).
 - Integration test: import 1 000-row CSV with 20 bad-format emails → `imported = 980`, `rejected.length = 20` (assumes no pre-existing duplicates).
 - Integration test: import without consent declaration → 422 response, zero rows inserted.
@@ -577,6 +594,7 @@ No other file outside `packages/core/listmonk/` may import this interface's impl
 ### M3 — Campaigns, templates, preview, test send
 
 **Tasks**
+
 - [ ] Campaign CRUD endpoints: create, update, get, list (paginated, filterable by status), soft-delete (set `status = 'cancelled'`). `campaign_mode` is set on create and **cannot be changed** after the first launch (returns 409).
 - [ ] Zod schema enforces:
   - `managed_send`: `subject`, `email_html`, `email_text` required; `require_otp` optional.
@@ -597,6 +615,7 @@ No other file outside `packages/core/listmonk/` may import this interface's impl
 - [ ] On every `page_html` save: insert a row into `campaign_page_versions`.
 
 **Acceptance**
+
 - Creating a `managed_send` campaign without `email_html` → 422.
 - Creating a `link_per_recipient` campaign with `email_html` → 422 (field forbidden).
 - Creating a `link_universal` campaign with `email_html` → 422.
@@ -612,9 +631,11 @@ No other file outside `packages/core/listmonk/` may import this interface's impl
 ### M4 — Launch and dispatch pipeline
 
 **Tasks**
+
 - [ ] Launch endpoint (`POST /api/campaigns/:id/launch`) — **branches on `campaign_mode`**:
 
   **Mode A (managed_send) — inside a single serialisable transaction:**
+
   - Gate: org `review_state` must be `approved`. If `pending` → 403 "Campaign pending manual review".
   - Gate: `daily_cap` enforcement. Cap eligible batch; remainder stays `pending` for next-day cron.
   - For each eligible recipient (not suppressed, `consent_status = 'granted'`, not `deleted_at`):
@@ -625,6 +646,7 @@ No other file outside `packages/core/listmonk/` may import this interface's impl
   - Discard raw tokens from memory after enqueue.
 
   **Mode B (link_per_recipient) — inside a single serialisable transaction:**
+
   - No `review_state` or `daily_cap` gates.
   - For each eligible recipient (same filters as Mode A):
     - `newToken()` → `hashToken(raw)` → store `token_hash` in `messages` row.
@@ -636,6 +658,7 @@ No other file outside `packages/core/listmonk/` may import this interface's impl
   - Re-generate endpoint: `POST /api/campaigns/:id/export-links` — rebuild CSV preserving existing tokens for already-viewed messages, generating fresh tokens for `pending` ones. Idempotent: return existing URL if `link_export_generated_at < 1 h ago`.
 
   **Mode C (link_universal) — inside a single serialisable transaction:**
+
   - No recipient list check (none needed).
   - `newToken()` → `hashToken(raw)` → write to `campaigns.universal_token_hash`.
   - Build `landing_link = ${LINK_BASE_URL}/m/${rawToken}` — this is the shared URL.
@@ -656,6 +679,7 @@ No other file outside `packages/core/listmonk/` may import this interface's impl
 - [ ] `List-Unsubscribe` headers (Mode A only): injected per RFC 8058 into every `/api/tx` call.
 
 **Acceptance**
+
 - **Mode A** — launch to 10 recipients, `daily_cap = 5` → 5 jobs enqueued, 5 `pending`, status `launching`.
 - **Mode A** — re-launch twice → zero new messages, zero duplicate jobs.
 - **Mode A** — kill worker after 3/10 jobs, restart → 7 dispatch with no duplicates.
@@ -670,24 +694,29 @@ No other file outside `packages/core/listmonk/` may import this interface's impl
 ### M5 — Landing page and verified reads
 
 **Tasks**
+
 - [ ] Route `/m/[token]` (Next.js App Router, server component, no client JS by default).
-  The route handles both per-recipient tokens (Modes A/B) and the universal campaign token (Mode C).
-  Resolution order:
+      The route handles both per-recipient tokens (Modes A/B) and the universal campaign token (Mode C).
+      Resolution order:
+
   1. Hash the token → query `messages where token_hash = $1` (Modes A/B path).
   2. If not found → query `campaigns where universal_token_hash = $1` (Mode C path).
   3. If neither found → serve `invalid` page; increment per-IP miss counter (rate limit).
 
   **Modes A/B path (message found):**
+
   - Evaluate expiry: `message.expires_at ?? campaign.expires_at`. If expired → `expired` page.
   - Evaluate status: if `bounced`, `complained`, `suppressed`, `failed` → `invalid` page (never reveal reason).
   - Retrieve latest `campaign_page_versions` row. Render `page_html` via `packages/core/render` with recipient `fields` + `first_name`.
   - Record landing page version ID in pending view event `meta`.
 
   **Mode C path (campaign found via universal_token_hash):**
+
   - Evaluate expiry: `campaign.expires_at`. If expired → `expired` page.
   - Retrieve latest `campaign_page_versions` row. Render `page_html` via `packages/core/render` with empty fields object (all `{{field}}` placeholders resolve to their fallbacks).
   - No per-person view event written. Increment `campaigns.universal_view_count` atomically (only if not a scanner hit).
   - No `pending_view` Redis entry. The beacon endpoint (`/api/track/view`) is not called for Mode C.
+
 - [ ] Response headers on `/m/[token]`:
   - `Referrer-Policy: no-referrer`
   - `X-Robots-Tag: noindex, nofollow`
@@ -709,6 +738,7 @@ No other file outside `packages/core/listmonk/` may import this interface's impl
   - Fallback for no-JS: if the client never fires the beacon within 60 s, no view is recorded. This is a deliberate decision (document in `DECISIONS.md`).
 
 **Acceptance**
+
 - Automated test: request with known bot UA (e.g. `Barracuda`) → page returns 200 (not 500) but zero `events` rows written, `view_count` unchanged.
 - Automated test: request within 8 seconds of `sent_at` with a normal UA → zero view events (timing-based scanner filter).
 - Automated test: simulated real-browser visit (beacon fires after 2 s) → exactly one `events(type='view')` row, `first_viewed_at` set, `view_count = 1`. Second beacon → `view_count = 2`, `first_viewed_at` unchanged.
@@ -723,6 +753,7 @@ No other file outside `packages/core/listmonk/` may import this interface's impl
 > Suppression (manual) and the unsubscribe landing page apply to **both modes**.
 
 **Tasks**
+
 - [ ] Webhook endpoint (`POST /api/webhooks/listmonk`) — **Managed Send only**:
   - Verify HMAC-SHA256 signature against raw body using `EMAIL_WEBHOOK_SECRET`. Reject with 401 on failure; log attempt (no body content in log).
   - Dedupe by listmonk event ID (store in `events.meta.providerEventId`; unique constraint on `(message_id, meta->>'providerEventId')`).
@@ -748,6 +779,7 @@ No other file outside `packages/core/listmonk/` may import this interface's impl
   - **Mode C (link_universal)**: shared link URL + QR code, total view count (`universal_view_count`), reply count (anonymous), action click counts. No per-person rows. Export as aggregate JSON only.
 
 **Acceptance**
+
 - **Mode A** — integration test: replay the same webhook payload twice → second call returns 200, zero new rows.
 - **Mode A** — integration test: forged webhook (bad signature) → 401, zero DB changes.
 - **Mode A** — integration test: hard-bounce → address in `suppressions`, subsequent Mode A launch skips that recipient.
@@ -763,6 +795,7 @@ No other file outside `packages/core/listmonk/` may import this interface's impl
 ### M7 — Landing page actions: reply, RSVP, OTP
 
 **Tasks**
+
 - [ ] Reply box: `POST /api/messages/:id/reply` (from landing page). Rate-limited: max 3 replies per `message_id`. Stores to `replies`. Emails the campaign owner a notification (via listmonk `/api/tx`) with a link to the thread view. Notification is de-bounced: at most one notification per message per 5 minutes.
 - [ ] Action blocks: sender embeds `data-action="rsvp-yes"`, `data-action="rsvp-no"`, `data-action="confirm"`, or `data-action="link"` elements in `page_html`. Client-side handler (small inline script) intercepts clicks and POSTs to `/api/messages/:id/action` with `{ block, value }`. Server writes `events(type='action', meta={block, value})`. Idempotent — an existing action event for the same `(message_id, block)` is overwritten (upsert on `meta` key).
 - [ ] OTP gate (`require_otp = true`):
@@ -777,6 +810,7 @@ No other file outside `packages/core/listmonk/` may import this interface's impl
 - [ ] Live page edit: `PATCH /api/campaigns/:id/page` — updates `campaigns.page_html` (sanitised), inserts `campaign_page_versions` row. All existing links render the new content immediately on next request (no cache).
 
 **Acceptance**
+
 - Integration test: 4th reply attempt on same message → 429.
 - Integration test: OTP — 5 wrong codes → 423 `locked_until` set. Correct code on attempt 1 → cookie set, content renders. Expired code (`expires_at` in the past) → 422.
 - Integration test: editing `page_html` via `PATCH` → next fetch of `/m/[token]` serves updated content; `campaign_page_versions` has 2 rows.
@@ -787,6 +821,7 @@ No other file outside `packages/core/listmonk/` may import this interface's impl
 ### M8 — Hardening and launch readiness
 
 **Tasks**
+
 - [ ] Sender safeguards:
   - Require `organizations.domain_verified_at` to be non-null before launching (DNS check via lookup, not just DB field). Endpoint: `POST /api/org/verify-domain` — queries SPF, DKIM (`_domainkey`), DMARC DNS records and sets `domain_verified_at` on success.
   - New org first campaign → `status = 'review'`; admin notification via listmonk `/api/tx`; admin approves via `POST /api/admin/campaigns/:id/approve`.
@@ -805,6 +840,7 @@ No other file outside `packages/core/listmonk/` may import this interface's impl
 - [ ] End-to-end Playwright test (CI, uses Mailpit as mail sink): import CSV → create campaign → launch → wait for Mailpit to receive email → extract link → open link → beacon fires → verify view event → reply → verify results dashboard shows correct counts.
 
 **Acceptance**
+
 - Full Playwright E2E test passes in CI.
 - Load test meets p95 < 300 ms target. Report numbers.
 - Security checklist (section 10) fully ticked.

@@ -1,11 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  newToken,
-  hashToken,
-  safeVerify,
-  encryptToken,
-  decryptToken,
-} from "./index.js";
+import { newToken, hashToken, safeVerify, encryptToken, decryptToken } from "./index.js";
 
 describe("newToken", () => {
   it("produces a non-empty base64url string", () => {

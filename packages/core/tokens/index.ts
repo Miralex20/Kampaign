@@ -36,9 +36,7 @@ export function hashToken(raw: string): Buffer {
  */
 export function safeVerify(raw: string, storedHash: Buffer): boolean {
   if (storedHash.length !== 32) {
-    throw new Error(
-      `Invalid stored hash length: expected 32 bytes, got ${storedHash.length}`,
-    );
+    throw new Error(`Invalid stored hash length: expected 32 bytes, got ${storedHash.length}`);
   }
   const candidate = hashToken(raw);
   // timingSafeEqual requires equal-length buffers; both are 32 bytes here.
@@ -66,11 +64,7 @@ export function encryptToken(raw: string, key: Buffer): string {
   const cipher = createCipheriv("aes-256-gcm", key, iv);
   const ct = Buffer.concat([cipher.update(raw, "utf8"), cipher.final()]);
   const tag = cipher.getAuthTag();
-  return [
-    iv.toString("base64url"),
-    ct.toString("base64url"),
-    tag.toString("base64url"),
-  ].join(".");
+  return [iv.toString("base64url"), ct.toString("base64url"), tag.toString("base64url")].join(".");
 }
 
 /**
@@ -101,9 +95,7 @@ export function decryptToken(ciphertext: string, key: Buffer): string {
 
   const decipher = createDecipheriv("aes-256-gcm", key, iv);
   decipher.setAuthTag(tag);
-  return Buffer.concat([decipher.update(ct), decipher.final()]).toString(
-    "utf8",
-  );
+  return Buffer.concat([decipher.update(ct), decipher.final()]).toString("utf8");
 }
 
 /** Parse and validate the TOKEN_ENCRYPTION_KEY environment variable. */

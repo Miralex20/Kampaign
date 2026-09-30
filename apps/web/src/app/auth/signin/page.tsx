@@ -1,8 +1,11 @@
-/**
- * Magic-link sign-in page.
- * Users enter their email address and receive a login link.
- */
+import { signIn } from "@/auth";
+
 export default function SignInPage() {
+  async function handleSignIn(formData: FormData) {
+    "use server";
+    await signIn("nodemailer", formData);
+  }
+
   return (
     <html lang="en">
       <head>
@@ -50,8 +53,8 @@ export default function SignInPage() {
       <body>
         <div className="card">
           <h1>Sign in</h1>
-          <p>Enter your email and we'll send you a magic link.</p>
-          <form action="/api/auth/signin/nodemailer" method="POST">
+          <p>Enter your email address to receive a secure sign-in magic link.</p>
+          <form action={handleSignIn}>
             <label htmlFor="email">Email address</label>
             <input
               id="email"
@@ -61,8 +64,7 @@ export default function SignInPage() {
               required
               autoFocus
             />
-            <input type="hidden" name="csrfToken" value="" />
-            <button type="submit">Send magic link</button>
+            <button type="submit">Send magic link →</button>
           </form>
         </div>
       </body>

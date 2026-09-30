@@ -19,10 +19,7 @@ const ActionSchema = z.object({
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function POST(
-  request: Request,
-  context: RouteContext,
-): Promise<NextResponse> {
+export async function POST(request: Request, context: RouteContext): Promise<NextResponse> {
   const { id: messageId } = await context.params;
 
   let body: unknown;

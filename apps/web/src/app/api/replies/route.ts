@@ -128,7 +128,10 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
 
     if (camp.allow_replies === false) {
-      return NextResponse.json({ error: "Replies are disabled for this campaign" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Replies are disabled for this campaign" },
+        { status: 403 },
+      );
     }
 
     // Insert universal reply with author_name and author_email
@@ -174,12 +177,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     .from(replies)
     .leftJoin(messages, eq(replies.message_id, messages.id))
     .leftJoin(recipients, eq(messages.recipient_id, recipients.id))
-    .where(
-      or(
-        eq(replies.campaign_id, campaignId),
-        eq(messages.campaign_id, campaignId),
-      ),
-    )
+    .where(or(eq(replies.campaign_id, campaignId), eq(messages.campaign_id, campaignId)))
     .orderBy(desc(replies.created_at))
     .limit(100);
 

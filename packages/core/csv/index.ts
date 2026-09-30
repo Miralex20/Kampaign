@@ -48,9 +48,7 @@ function validateEmail(raw: string): string | null {
  * Required column: `email` (case-insensitive header match).
  * Optional columns: `first_name`, any others become `fields`.
  */
-export async function parseRecipientCsv(
-  input: string | Buffer,
-): Promise<ParseResult> {
+export async function parseRecipientCsv(input: string | Buffer): Promise<ParseResult> {
   const source = typeof input === "string" ? input : input.toString("utf8");
 
   return new Promise((resolve) => {

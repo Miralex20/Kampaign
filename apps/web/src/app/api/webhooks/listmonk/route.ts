@@ -53,16 +53,11 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   const signature = request.headers.get("x-listmonk-signature") ?? "";
-  const expectedSig = createHmac("sha256", webhookSecret)
-    .update(rawBody)
-    .digest("hex");
+  const expectedSig = createHmac("sha256", webhookSecret).update(rawBody).digest("hex");
 
   let sigMatch = false;
   try {
-    sigMatch = timingSafeEqual(
-      Buffer.from(signature, "hex"),
-      Buffer.from(expectedSig, "hex"),
-    );
+    sigMatch = timingSafeEqual(Buffer.from(signature, "hex"), Buffer.from(expectedSig, "hex"));
   } catch {
     sigMatch = false;
   }
@@ -147,12 +142,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         .limit(1);
       return !!row;
     },
-    async suppress(
-      oId: string,
-      e: string,
-      reason: string,
-      bounceType?: string,
-    ) {
+    async suppress(oId: string, e: string, reason: string, bounceType?: string) {
       await db
         .insert(suppressions)
         .values({
@@ -181,10 +171,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       break;
 
     case "hard_bounce":
-      await db
-        .update(messages)
-        .set({ status: "bounced" })
-        .where(eq(messages.id, message.id));
+      await db.update(messages).set({ status: "bounced" }).where(eq(messages.id, message.id));
       await db_suppress.suppress(orgId, email, "hard_bounce", "hard");
       await checkRateAlert(orgId, "bounce");
       break;
@@ -194,10 +181,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       break;
 
     case "complaint":
-      await db
-        .update(messages)
-        .set({ status: "complained" })
-        .where(eq(messages.id, message.id));
+      await db.update(messages).set({ status: "complained" }).where(eq(messages.id, message.id));
       await db_suppress.suppress(orgId, email, "complaint");
       await checkRateAlert(orgId, "complaint");
       break;

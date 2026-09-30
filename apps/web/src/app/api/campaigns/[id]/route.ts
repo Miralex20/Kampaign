@@ -18,10 +18,7 @@ type RouteContext = { params: Promise<{ id: string }> };
 // ---------------------------------------------------------------------------
 // GET /api/campaigns/:id
 // ---------------------------------------------------------------------------
-export async function GET(
-  _request: Request,
-  context: RouteContext,
-): Promise<NextResponse> {
+export async function GET(_request: Request, context: RouteContext): Promise<NextResponse> {
   let session: Awaited<ReturnType<typeof requireSession>>;
   try {
     session = await requireSession();
@@ -48,10 +45,7 @@ export async function GET(
 // ---------------------------------------------------------------------------
 // PATCH /api/campaigns/:id
 // ---------------------------------------------------------------------------
-export async function PATCH(
-  request: Request,
-  context: RouteContext,
-): Promise<NextResponse> {
+export async function PATCH(request: Request, context: RouteContext): Promise<NextResponse> {
   let session: Awaited<ReturnType<typeof requireSession>>;
   try {
     session = await requireSession();
@@ -73,9 +67,7 @@ export async function PATCH(
   }
 
   // Guard: campaign_mode is immutable after first launch
-  const postLaunchStatuses = new Set([
-    "launching", "live", "paused", "completed",
-  ]);
+  const postLaunchStatuses = new Set(["launching", "live", "paused", "completed"]);
   let body: unknown;
   try {
     body = await request.json();
@@ -110,7 +102,10 @@ export async function PATCH(
     const pageScreen = screenContent(data.page_html);
     if (!pageScreen.passed) {
       return NextResponse.json(
-        { error: "Content blocked: detected prohibited phishing keyword", matched: pageScreen.matched },
+        {
+          error: "Content blocked: detected prohibited phishing keyword",
+          matched: pageScreen.matched,
+        },
         { status: 422 },
       );
     }
@@ -119,7 +114,10 @@ export async function PATCH(
     const emailScreen = screenContent(data.email_html);
     if (!emailScreen.passed) {
       return NextResponse.json(
-        { error: "Content blocked: detected prohibited phishing keyword", matched: emailScreen.matched },
+        {
+          error: "Content blocked: detected prohibited phishing keyword",
+          matched: emailScreen.matched,
+        },
         { status: 422 },
       );
     }
@@ -173,10 +171,7 @@ export async function PATCH(
 // ---------------------------------------------------------------------------
 // DELETE /api/campaigns/:id — soft delete
 // ---------------------------------------------------------------------------
-export async function DELETE(
-  _request: Request,
-  context: RouteContext,
-): Promise<NextResponse> {
+export async function DELETE(_request: Request, context: RouteContext): Promise<NextResponse> {
   let session: Awaited<ReturnType<typeof requireSession>>;
   try {
     session = await requireSession();

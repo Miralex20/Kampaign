@@ -30,10 +30,7 @@ function getRedis(): Redis {
   return redisClient;
 }
 
-export async function POST(
-  request: Request,
-  context: RouteContext,
-): Promise<NextResponse> {
+export async function POST(request: Request, context: RouteContext): Promise<NextResponse> {
   const { id: messageId } = await context.params;
 
   let body: unknown;
@@ -112,7 +109,8 @@ export async function POST(
       const listmonk = createListmonkClient({
         baseUrl: process.env["LISTMONK_URL"],
         apiUser: process.env["LISTMONK_API_USER"] ?? process.env["LISTMONK_USERNAME"] ?? "listmonk",
-        apiToken: process.env["LISTMONK_API_TOKEN"] ?? process.env["LISTMONK_PASSWORD"] ?? "listmonk",
+        apiToken:
+          process.env["LISTMONK_API_TOKEN"] ?? process.env["LISTMONK_PASSWORD"] ?? "listmonk",
       });
       const templateId = Number(process.env["LISTMONK_TX_TEMPLATE_ID"] ?? 1);
       const appUrl = process.env["APP_URL"] ?? "http://localhost:3000";

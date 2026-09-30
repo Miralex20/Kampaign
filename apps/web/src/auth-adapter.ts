@@ -49,11 +49,7 @@ export function DrizzleAdapter(): Adapter {
 
     async getUser(id) {
       const db = getDb();
-      const [user] = await db
-        .select()
-        .from(auth_users)
-        .where(eq(auth_users.id, id))
-        .limit(1);
+      const [user] = await db.select().from(auth_users).where(eq(auth_users.id, id)).limit(1);
       if (!user) return null;
       return {
         id: user.id,
@@ -66,11 +62,7 @@ export function DrizzleAdapter(): Adapter {
 
     async getUserByEmail(email) {
       const db = getDb();
-      const [user] = await db
-        .select()
-        .from(auth_users)
-        .where(eq(auth_users.email, email))
-        .limit(1);
+      const [user] = await db.select().from(auth_users).where(eq(auth_users.email, email)).limit(1);
       if (!user) return null;
       return {
         id: user.id,
@@ -202,9 +194,7 @@ export function DrizzleAdapter(): Adapter {
 
     async deleteSession(sessionToken) {
       const db = getDb();
-      await db
-        .delete(auth_sessions)
-        .where(eq(auth_sessions.session_token, sessionToken));
+      await db.delete(auth_sessions).where(eq(auth_sessions.session_token, sessionToken));
     },
 
     // -------------------------------------------------------------------------

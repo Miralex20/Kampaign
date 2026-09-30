@@ -127,7 +127,12 @@ export const users = pgTable("users", {
     .notNull()
     .references(() => organizations.id, { onDelete: "cascade" }),
   email: text("email").notNull().unique(),
+  name: text("name"),
   role: text("role").notNull().default("owner"),
+  permissions: jsonb("permissions").notNull().default({}),
+  status: text("status").notNull().default("active"),
+  invited_by: uuid("invited_by"),
+  last_active_at: timestamp("last_active_at", { withTimezone: true }),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -296,6 +301,31 @@ export const otp_codes = pgTable("otp_codes", {
   expires_at: timestamp("expires_at", { withTimezone: true }).notNull(),
 });
 
+export const invitations = pgTable(
+  "invitations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    org_id: uuid("org_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    email: citext("email").notNull(),
+    role: text("role").notNull().default("editor"),
+    permissions: jsonb("permissions").notNull().default({}),
+    token_hash: bytea("token_hash").notNull().unique(),
+    invited_by: uuid("invited_by")
+      .notNull()
+      .references(() => users.id),
+    status: text("status").notNull().default("pending"),
+    expires_at: timestamp("expires_at", { withTimezone: true }).notNull(),
+    created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("invitations_org_id_email_status_uidx").on(t.org_id, t.email, t.status),
+    index("invitations_token_hash_idx").on(t.token_hash),
+    index("invitations_org_id_status_idx").on(t.org_id, t.status),
+  ],
+);
+
 // ---------------------------------------------------------------------------
 // Type exports (inferred from schema)
 // ---------------------------------------------------------------------------
@@ -326,6 +356,8 @@ export type NewEvent = typeof events.$inferInsert;
 export type Reply = typeof replies.$inferSelect;
 export type Suppression = typeof suppressions.$inferSelect;
 export type OtpCode = typeof otp_codes.$inferSelect;
+export type Invitation = typeof invitations.$inferSelect;
+export type NewInvitation = typeof invitations.$inferInsert;
 
 // Auth.js types
 export type AuthUser = typeof auth_users.$inferSelect;

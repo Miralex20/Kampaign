@@ -10,10 +10,7 @@ import { eq, and, desc, count } from "drizzle-orm";
 import { sanitiseHtml } from "@campaign/core/sanitise";
 import { screenContent } from "@campaign/core/screening";
 import { requireSession } from "@/lib/session";
-import {
-  CreateCampaignSchema,
-  ListCampaignsSchema,
-} from "@/lib/schemas/campaign";
+import { CreateCampaignSchema, ListCampaignsSchema } from "@/lib/schemas/campaign";
 
 // ---------------------------------------------------------------------------
 // GET /api/campaigns
@@ -28,9 +25,7 @@ export async function GET(request: Request): Promise<NextResponse> {
   const { orgId } = session;
 
   const url = new URL(request.url);
-  const queryParse = ListCampaignsSchema.safeParse(
-    Object.fromEntries(url.searchParams),
-  );
+  const queryParse = ListCampaignsSchema.safeParse(Object.fromEntries(url.searchParams));
   if (!queryParse.success) {
     return NextResponse.json(
       { error: "Invalid query parameters", issues: queryParse.error.issues },
@@ -102,7 +97,10 @@ export async function POST(request: Request): Promise<NextResponse> {
   const pageScreen = screenContent(data.page_html);
   if (!pageScreen.passed) {
     return NextResponse.json(
-      { error: "Content blocked: detected prohibited phishing keyword", matched: pageScreen.matched },
+      {
+        error: "Content blocked: detected prohibited phishing keyword",
+        matched: pageScreen.matched,
+      },
       { status: 422 },
     );
   }
@@ -110,7 +108,10 @@ export async function POST(request: Request): Promise<NextResponse> {
     const emailScreen = screenContent(data.email_html);
     if (!emailScreen.passed) {
       return NextResponse.json(
-        { error: "Content blocked: detected prohibited phishing keyword", matched: emailScreen.matched },
+        {
+          error: "Content blocked: detected prohibited phishing keyword",
+          matched: emailScreen.matched,
+        },
         { status: 422 },
       );
     }
@@ -120,7 +121,6 @@ export async function POST(request: Request): Promise<NextResponse> {
   const sanitisedPageHtml = sanitiseHtml(data.page_html);
   const sanitisedEmailHtml =
     data.campaign_mode === "managed_send" ? sanitiseHtml(data.email_html) : undefined;
-
 
   const db = getDb();
 

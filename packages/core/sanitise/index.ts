@@ -22,11 +22,41 @@
 //   import DOMPurify from "dompurify"; import { JSDOM } from "jsdom";
 
 const ALLOWED_TAGS = new Set([
-  "a", "b", "i", "em", "strong", "u", "s", "span", "code", "sup", "sub", "br",
-  "p", "h1", "h2", "h3", "h4", "h5", "h6",
-  "ul", "ol", "li", "blockquote", "pre", "hr", "div",
+  "a",
+  "b",
+  "i",
+  "em",
+  "strong",
+  "u",
+  "s",
+  "span",
+  "code",
+  "sup",
+  "sub",
+  "br",
+  "p",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "ul",
+  "ol",
+  "li",
+  "blockquote",
+  "pre",
+  "hr",
+  "div",
   "img",
-  "table", "thead", "tbody", "tfoot", "tr", "th", "td", "caption",
+  "table",
+  "thead",
+  "tbody",
+  "tfoot",
+  "tr",
+  "th",
+  "td",
+  "caption",
 ]);
 
 const ALLOWED_ATTRS: Record<string, RegExp | true> = {
@@ -71,36 +101,39 @@ export function sanitiseHtml(raw: string): string {
   );
 
   // 3. Strip event handler attributes and javascript: hrefs from any tag.
-  out = out.replace(/<([a-zA-Z][a-zA-Z0-9]*)(\s[^>]*)?(\/?)>/g, (match, tag: string, attrs: string | undefined, selfClose: string) => {
-    const tagLower = tag.toLowerCase();
-    if (!ALLOWED_TAGS.has(tagLower)) {
-      return ""; // Strip unknown/disallowed tags entirely
-    }
-    if (!attrs) return match;
+  out = out.replace(
+    /<([a-zA-Z][a-zA-Z0-9]*)(\s[^>]*)?(\/?)>/g,
+    (match, tag: string, attrs: string | undefined, selfClose: string) => {
+      const tagLower = tag.toLowerCase();
+      if (!ALLOWED_TAGS.has(tagLower)) {
+        return ""; // Strip unknown/disallowed tags entirely
+      }
+      if (!attrs) return match;
 
-    // Filter attributes
-    const cleanAttrs = attrs.replace(
-      /\s([a-zA-Z][a-zA-Z0-9-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]*)))?/g,
-      (_attrMatch, attrName: string, dq: string, sq: string, uq: string) => {
-        const name = attrName.toLowerCase();
-        const value = dq ?? sq ?? uq ?? "";
+      // Filter attributes
+      const cleanAttrs = attrs.replace(
+        /\s([a-zA-Z][a-zA-Z0-9-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]*)))?/g,
+        (_attrMatch, attrName: string, dq: string, sq: string, uq: string) => {
+          const name = attrName.toLowerCase();
+          const value = dq ?? sq ?? uq ?? "";
 
-        // Block all event handlers
-        if (DANGEROUS_ATTR.test(name)) return "";
-        // Block javascript: protocol in any attribute
-        if (DANGEROUS_HREF.test(value)) return "";
+          // Block all event handlers
+          if (DANGEROUS_ATTR.test(name)) return "";
+          // Block javascript: protocol in any attribute
+          if (DANGEROUS_HREF.test(value)) return "";
 
-        const rule = ALLOWED_ATTRS[name];
-        if (!rule) return ""; // Attribute not in allowlist
+          const rule = ALLOWED_ATTRS[name];
+          if (!rule) return ""; // Attribute not in allowlist
 
-        if (rule instanceof RegExp && !rule.test(value)) return ""; // Value fails pattern
+          if (rule instanceof RegExp && !rule.test(value)) return ""; // Value fails pattern
 
-        return ` ${name}="${value}"`;
-      },
-    );
+          return ` ${name}="${value}"`;
+        },
+      );
 
-    return `<${tag}${cleanAttrs}${selfClose ? " /" : ""}>`;
-  });
+      return `<${tag}${cleanAttrs}${selfClose ? " /" : ""}>`;
+    },
+  );
 
   // 4. Strip closing tags for disallowed tags
   out = out.replace(/<\/([a-zA-Z][a-zA-Z0-9]*)\s*>/g, (_match, tag: string) => {

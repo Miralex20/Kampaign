@@ -15,23 +15,13 @@
  *   sharedUrl, universal_view_count, reply count, action counts (aggregate only, no per-person rows)
  */
 import { NextResponse } from "next/server";
-import {
-  getDb,
-  campaigns,
-  messages,
-  recipients,
-  replies,
-  events,
-} from "@campaign/db";
+import { getDb, campaigns, messages, recipients, replies, events } from "@campaign/db";
 import { eq, and, sql, count } from "drizzle-orm";
 import { requireSession } from "@/lib/session";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function GET(
-  _request: Request,
-  context: RouteContext,
-): Promise<NextResponse> {
+export async function GET(_request: Request, context: RouteContext): Promise<NextResponse> {
   let session: Awaited<ReturnType<typeof requireSession>>;
   try {
     session = await requireSession();
@@ -97,12 +87,7 @@ export async function GET(
   const [verifiedReadsResult] = await db
     .select({ total: count() })
     .from(messages)
-    .where(
-      and(
-        eq(messages.campaign_id, campaignId),
-        sql`${messages.first_viewed_at} IS NOT NULL`,
-      ),
-    );
+    .where(and(eq(messages.campaign_id, campaignId), sql`${messages.first_viewed_at} IS NOT NULL`));
 
   // 3. Total replies for messages in this campaign
   const [repliesResult] = await db
@@ -119,12 +104,7 @@ export async function GET(
     })
     .from(events)
     .innerJoin(messages, eq(events.message_id, messages.id))
-    .where(
-      and(
-        eq(messages.campaign_id, campaignId),
-        eq(events.type, "action"),
-      ),
-    )
+    .where(and(eq(messages.campaign_id, campaignId), eq(events.type, "action")))
     .groupBy(sql`${events.meta}->>'block'`);
 
   // 5. Per-recipient timeline rows (up to 500 for the results view)

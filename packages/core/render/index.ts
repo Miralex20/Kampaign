@@ -31,10 +31,7 @@ export function escapeHtml(value: string): string {
  * @param data     - Key/value map of substitution values.
  * @returns        - Rendered string with all valid placeholders substituted.
  */
-export function render(
-  template: string,
-  data: Record<string, string | undefined | null>,
-): string {
+export function render(template: string, data: Record<string, string | undefined | null>): string {
   // Matches {{key}} and {{key|fallback}} where key is word chars + hyphens.
   // Anything that does not match this pattern is left unchanged.
   return template.replace(

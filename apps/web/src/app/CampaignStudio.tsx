@@ -46,7 +46,9 @@ export function CampaignStudio({
   initialDomainVerified,
 }: CampaignStudioProps) {
   // Navigation / Stepper
-  const [activeStep, setActiveStep] = useState<"audience" | "compose" | "preview" | "export_send" | "inbox">("audience");
+  const [activeStep, setActiveStep] = useState<
+    "audience" | "compose" | "preview" | "export_send" | "inbox"
+  >("audience");
 
   // Mode Selection: "personalized" vs "broadcast"
   const [mode, setMode] = useState<"personalized" | "broadcast">("personalized");
@@ -168,7 +170,12 @@ export function CampaignStudio({
     setLoading(true);
     setExecutionResult(null);
 
-    const backendMode = mode === "broadcast" ? "link_universal" : dispatchViaPlatform ? "managed_send" : "link_per_recipient";
+    const backendMode =
+      mode === "broadcast"
+        ? "link_universal"
+        : dispatchViaPlatform
+          ? "managed_send"
+          : "link_per_recipient";
 
     try {
       const res = await fetch("/api/campaigns/quick-create", {
@@ -293,7 +300,6 @@ ${landingContent}
     URL.revokeObjectURL(url);
   }
 
-
   // Trigger DNS verify
   async function handleVerifyDomain() {
     setVerifyingDomain(true);
@@ -323,11 +329,12 @@ ${landingContent}
   }
 
   // Preview interpolation helper
-  const activeRecipient = recipients[selectedPreviewIdx] || recipients[0] || {
-    email: "visitor@example.com",
-    first_name: "Friend",
-    sex: "Member",
-  };
+  const activeRecipient = recipients[selectedPreviewIdx] ||
+    recipients[0] || {
+      email: "visitor@example.com",
+      first_name: "Friend",
+      sex: "Member",
+    };
 
   const previewSubject = subject
     .replace(/\{\{first_name(?:\|[^}]*)?\}\}/g, activeRecipient.first_name)
@@ -515,14 +522,34 @@ ${landingContent}
 
       {/* STEP 1: AUDIENCE & MODE */}
       {activeStep === "audience" && (
-        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "28px", boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)" }}>
-          <h2 style={{ fontSize: "20px", fontWeight: "700", margin: "0 0 6px 0", color: "#0f172a" }}>Choose Campaign Mode & Audience</h2>
+        <div
+          style={{
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
+            borderRadius: "12px",
+            padding: "28px",
+            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
+          }}
+        >
+          <h2
+            style={{ fontSize: "20px", fontWeight: "700", margin: "0 0 6px 0", color: "#0f172a" }}
+          >
+            Choose Campaign Mode & Audience
+          </h2>
           <p style={{ color: "#64748b", fontSize: "14px", margin: "0 0 24px 0" }}>
-            Select how you plan to distribute this campaign. You can import contacts with custom attributes (like sex, name) or generate a public group link.
+            Select how you plan to distribute this campaign. You can import contacts with custom
+            attributes (like sex, name) or generate a public group link.
           </p>
 
           {/* Mode Selector Cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "28px" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "16px",
+              marginBottom: "28px",
+            }}
+          >
             <div
               onClick={() => setMode("personalized")}
               style={{
@@ -534,12 +561,32 @@ ${landingContent}
                 transition: "all 0.15s ease",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-                <span style={{ fontSize: "15px", fontWeight: "700", color: mode === "personalized" ? "#312e81" : "#0f172a" }}>Contact List (Personalized)</span>
-                {mode === "personalized" && <span style={{ color: "#4f46e5", fontWeight: "700", fontSize: "13px" }}>✓ Selected</span>}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: "8px",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "15px",
+                    fontWeight: "700",
+                    color: mode === "personalized" ? "#312e81" : "#0f172a",
+                  }}
+                >
+                  Contact List (Personalized)
+                </span>
+                {mode === "personalized" && (
+                  <span style={{ color: "#4f46e5", fontWeight: "700", fontSize: "13px" }}>
+                    ✓ Selected
+                  </span>
+                )}
               </div>
               <p style={{ fontSize: "13px", color: "#64748b", margin: 0, lineHeight: "1.5" }}>
-                Import emails with details (Name, Sex, etc.). Every recipient receives a custom email intro and their own private dynamic page (`/m/[token]`).
+                Import emails with details (Name, Sex, etc.). Every recipient receives a custom
+                email intro and their own private dynamic page (`/m/[token]`).
               </p>
             </div>
 
@@ -554,19 +601,47 @@ ${landingContent}
                 transition: "all 0.15s ease",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-                <span style={{ fontSize: "15px", fontWeight: "700", color: mode === "broadcast" ? "#312e81" : "#0f172a" }}>Group Broadcast (WhatsApp / Web)</span>
-                {mode === "broadcast" && <span style={{ color: "#4f46e5", fontWeight: "700", fontSize: "13px" }}>✓ Selected</span>}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: "8px",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "15px",
+                    fontWeight: "700",
+                    color: mode === "broadcast" ? "#312e81" : "#0f172a",
+                  }}
+                >
+                  Group Broadcast (WhatsApp / Web)
+                </span>
+                {mode === "broadcast" && (
+                  <span style={{ color: "#4f46e5", fontWeight: "700", fontSize: "13px" }}>
+                    ✓ Selected
+                  </span>
+                )}
               </div>
               <p style={{ fontSize: "13px", color: "#64748b", margin: 0, lineHeight: "1.5" }}>
-                No recipient list needed. Produces a single shareable link for WhatsApp groups. If replies are on, respondents enter their Name & Email.
+                No recipient list needed. Produces a single shareable link for WhatsApp groups. If
+                replies are on, respondents enter their Name & Email.
               </p>
             </div>
           </div>
 
           {/* Campaign Title Input */}
           <div style={{ marginBottom: "28px" }}>
-            <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: "13px",
+                fontWeight: "600",
+                color: "#334155",
+                marginBottom: "6px",
+              }}
+            >
               Campaign Reference Name
             </label>
             <input
@@ -589,15 +664,40 @@ ${landingContent}
           {/* Contact List Importer (Only for Personalized Mode) */}
           {mode === "personalized" && (
             <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "24px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                <h3 style={{ fontSize: "16px", fontWeight: "700", margin: 0, color: "#0f172a" }}>Import Contact List</h3>
-                <span style={{ fontSize: "12px", color: "#64748b" }}>Accepts CSV with headers: email, first_name, sex</span>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "16px",
+                }}
+              >
+                <h3 style={{ fontSize: "16px", fontWeight: "700", margin: 0, color: "#0f172a" }}>
+                  Import Contact List
+                </h3>
+                <span style={{ fontSize: "12px", color: "#64748b" }}>
+                  Accepts CSV with headers: email, first_name, sex
+                </span>
               </div>
 
               {/* CSV Upload & Paste Form */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "20px" }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "20px",
+                  marginBottom: "20px",
+                }}
+              >
                 <div>
-                  <label style={{ display: "block", fontSize: "12px", color: "#64748b", marginBottom: "6px" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "12px",
+                      color: "#64748b",
+                      marginBottom: "6px",
+                    }}
+                  >
                     Paste CSV Data or Add Custom Rows:
                   </label>
                   <textarea
@@ -614,7 +714,8 @@ ${landingContent}
                       padding: "10px",
                       color: "#0f172a",
                       fontSize: "13px",
-                      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                      fontFamily:
+                        "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
                     }}
                   />
                   <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
@@ -651,14 +752,27 @@ ${landingContent}
                     </button>
                   </div>
                   {csvUploadFeedback && (
-                    <div style={{ marginTop: "8px", fontSize: "12px", color: csvUploadFeedback.startsWith("✓") ? "#059669" : "#dc2626" }}>
+                    <div
+                      style={{
+                        marginTop: "8px",
+                        fontSize: "12px",
+                        color: csvUploadFeedback.startsWith("✓") ? "#059669" : "#dc2626",
+                      }}
+                    >
                       {csvUploadFeedback}
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "12px", color: "#64748b", marginBottom: "6px" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "12px",
+                      color: "#64748b",
+                      marginBottom: "6px",
+                    }}
+                  >
                     Or Upload CSV File from Disk:
                   </label>
                   <div
@@ -676,7 +790,7 @@ ${landingContent}
                       onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file) {
-                           const reader = new FileReader();
+                          const reader = new FileReader();
                           reader.onload = (event) => {
                             const content = event.target?.result as string;
                             if (content) handleCsvParse(content);
@@ -711,17 +825,47 @@ ${landingContent}
               </div>
 
               {/* Contacts Table Preview */}
-              <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "8px", overflow: "hidden" }}>
-                <div style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", background: "#f8fafc" }}>
+              <div
+                style={{
+                  background: "#ffffff",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "8px",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    padding: "12px 16px",
+                    borderBottom: "1px solid #e2e8f0",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    background: "#f8fafc",
+                  }}
+                >
                   <span style={{ fontSize: "13px", fontWeight: "600", color: "#334155" }}>
                     Active Recipient List ({recipients.length} contacts)
                   </span>
-                  <span style={{ fontSize: "12px", color: "#4f46e5", fontWeight: "500" }}>Ready for dynamic interpolation</span>
+                  <span style={{ fontSize: "12px", color: "#4f46e5", fontWeight: "500" }}>
+                    Ready for dynamic interpolation
+                  </span>
                 </div>
                 <div style={{ maxHeight: "200px", overflowY: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", textAlign: "left" }}>
+                  <table
+                    style={{
+                      width: "100%",
+                      borderCollapse: "collapse",
+                      fontSize: "13px",
+                      textAlign: "left",
+                    }}
+                  >
                     <thead>
-                      <tr style={{ background: "#f8fafc", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>
+                      <tr
+                        style={{
+                          background: "#f8fafc",
+                          color: "#475569",
+                          borderBottom: "1px solid #e2e8f0",
+                        }}
+                      >
                         <th style={{ padding: "9px 16px", fontWeight: "600" }}>#</th>
                         <th style={{ padding: "9px 16px", fontWeight: "600" }}>Email</th>
                         <th style={{ padding: "9px 16px", fontWeight: "600" }}>First Name</th>
@@ -732,10 +876,23 @@ ${landingContent}
                       {recipients.map((r, i) => (
                         <tr key={i} style={{ borderBottom: "1px solid #f1f5f9" }}>
                           <td style={{ padding: "9px 16px", color: "#94a3b8" }}>{i + 1}</td>
-                          <td style={{ padding: "9px 16px", fontWeight: "600", color: "#0f172a" }}>{r.email}</td>
-                          <td style={{ padding: "9px 16px", color: "#334155" }}>{r.first_name || "—"}</td>
+                          <td style={{ padding: "9px 16px", fontWeight: "600", color: "#0f172a" }}>
+                            {r.email}
+                          </td>
+                          <td style={{ padding: "9px 16px", color: "#334155" }}>
+                            {r.first_name || "—"}
+                          </td>
                           <td style={{ padding: "9px 16px" }}>
-                            <span style={{ background: "#f1f5f9", padding: "2px 8px", borderRadius: "4px", color: "#475569", fontSize: "12px", border: "1px solid #e2e8f0" }}>
+                            <span
+                              style={{
+                                background: "#f1f5f9",
+                                padding: "2px 8px",
+                                borderRadius: "4px",
+                                color: "#475569",
+                                fontSize: "12px",
+                                border: "1px solid #e2e8f0",
+                              }}
+                            >
                               {r.sex || "Default"}
                             </span>
                           </td>
@@ -771,12 +928,37 @@ ${landingContent}
 
       {/* STEP 2: COMPOSE & TEMPLATES */}
       {activeStep === "compose" && (
-        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "28px", boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+        <div
+          style={{
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
+            borderRadius: "12px",
+            padding: "28px",
+            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "16px",
+            }}
+          >
             <div>
-              <h2 style={{ fontSize: "20px", fontWeight: "700", margin: "0 0 4px 0", color: "#0f172a" }}>Compose Message & Dynamic Page</h2>
+              <h2
+                style={{
+                  fontSize: "20px",
+                  fontWeight: "700",
+                  margin: "0 0 4px 0",
+                  color: "#0f172a",
+                }}
+              >
+                Compose Message & Dynamic Page
+              </h2>
               <p style={{ color: "#64748b", fontSize: "14px", margin: 0 }}>
-                Write the email teaser notice and the full confidential landing page. Insert personal variables with 1 click.
+                Write the email teaser notice and the full confidential landing page. Insert
+                personal variables with 1 click.
               </p>
             </div>
           </div>
@@ -853,19 +1035,43 @@ ${landingContent}
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
             {/* Box 1: Intro Email Notice */}
-            <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+            <div
+              style={{
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                borderRadius: "10px",
+                padding: "20px",
+              }}
+            >
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}
+              >
                 <span style={{ fontSize: "18px" }}>✉️</span>
                 <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "700", color: "#0f172a" }}>
                   1. Intro Email (Sent to Inbox)
                 </h3>
               </div>
-              <p style={{ fontSize: "12px", color: "#64748b", margin: "0 0 16px 0", lineHeight: "1.4" }}>
-                This is the clean notification email. Contains a short intro teaser and a button taking them to the dynamic page.
+              <p
+                style={{
+                  fontSize: "12px",
+                  color: "#64748b",
+                  margin: "0 0 16px 0",
+                  lineHeight: "1.4",
+                }}
+              >
+                This is the clean notification email. Contains a short intro teaser and a button
+                taking them to the dynamic page.
               </p>
 
               <div style={{ marginBottom: "14px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "6px",
+                  }}
+                >
                   <label style={{ fontSize: "12px", fontWeight: "600", color: "#334155" }}>
                     Email Subject Line
                   </label>
@@ -876,7 +1082,8 @@ ${landingContent}
                       color: subject.length > 60 ? "#d97706" : "#059669",
                     }}
                   >
-                    {subject.length}/60 chars {subject.length > 60 ? "(may truncate on mobile)" : "(optimal length)"}
+                    {subject.length}/60 chars{" "}
+                    {subject.length > 60 ? "(may truncate on mobile)" : "(optimal length)"}
                   </span>
                 </div>
                 <input
@@ -898,7 +1105,15 @@ ${landingContent}
               </div>
 
               <div style={{ marginBottom: "14px" }}>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    color: "#334155",
+                    marginBottom: "6px",
+                  }}
+                >
                   Custom Intro Teaser Message
                 </label>
                 <textarea
@@ -921,7 +1136,15 @@ ${landingContent}
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    color: "#334155",
+                    marginBottom: "6px",
+                  }}
+                >
                   Action Button Label
                 </label>
                 <input
@@ -943,19 +1166,44 @@ ${landingContent}
             </div>
 
             {/* Box 2: Dynamic Landing Page */}
-            <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+            <div
+              style={{
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                borderRadius: "10px",
+                padding: "20px",
+              }}
+            >
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}
+              >
                 <span style={{ fontSize: "18px" }}>🌐</span>
                 <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "700", color: "#0f172a" }}>
                   2. Dynamic Landing Page (/m/[token])
                 </h3>
               </div>
-              <p style={{ fontSize: "12px", color: "#64748b", margin: "0 0 16px 0", lineHeight: "1.4" }}>
-                The full message rendered on the protected page. Each person's name and sex will be substituted automatically.
+              <p
+                style={{
+                  fontSize: "12px",
+                  color: "#64748b",
+                  margin: "0 0 16px 0",
+                  lineHeight: "1.4",
+                }}
+              >
+                The full message rendered on the protected page. Each person's name and sex will be
+                substituted automatically.
               </p>
 
               <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    color: "#334155",
+                    marginBottom: "6px",
+                  }}
+                >
                   Page Content
                 </label>
                 <textarea
@@ -978,8 +1226,25 @@ ${landingContent}
               </div>
 
               {/* Toggles */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px", borderTop: "1px solid #e2e8f0", paddingTop: "14px" }}>
-                <label style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", color: "#334155", cursor: "pointer" }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                  borderTop: "1px solid #e2e8f0",
+                  paddingTop: "14px",
+                }}
+              >
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    fontSize: "13px",
+                    color: "#334155",
+                    cursor: "pointer",
+                  }}
+                >
                   <input
                     type="checkbox"
                     checked={allowReplies}
@@ -991,7 +1256,16 @@ ${landingContent}
                   </span>
                 </label>
 
-                <label style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", color: "#334155", cursor: "pointer" }}>
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    fontSize: "13px",
+                    color: "#334155",
+                    cursor: "pointer",
+                  }}
+                >
                   <input
                     type="checkbox"
                     checked={requireOtp}
@@ -1040,10 +1314,36 @@ ${landingContent}
 
       {/* STEP 3: LIVE PREVIEW */}
       {activeStep === "preview" && (
-        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "28px", boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "12px" }}>
+        <div
+          style={{
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
+            borderRadius: "12px",
+            padding: "28px",
+            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "20px",
+              flexWrap: "wrap",
+              gap: "12px",
+            }}
+          >
             <div>
-              <h2 style={{ fontSize: "20px", fontWeight: "700", margin: "0 0 4px 0", color: "#0f172a" }}>Interactive Live Preview</h2>
+              <h2
+                style={{
+                  fontSize: "20px",
+                  fontWeight: "700",
+                  margin: "0 0 4px 0",
+                  color: "#0f172a",
+                }}
+              >
+                Interactive Live Preview
+              </h2>
               <p style={{ color: "#64748b", fontSize: "14px", margin: 0 }}>
                 Test how the variables swap for different recipients.
               </p>
@@ -1051,7 +1351,17 @@ ${landingContent}
 
             {/* Recipient switcher */}
             {mode === "personalized" && recipients.length > 0 && (
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#f8fafc", padding: "5px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  background: "#f8fafc",
+                  padding: "5px 12px",
+                  borderRadius: "6px",
+                  border: "1px solid #cbd5e1",
+                }}
+              >
                 <span style={{ fontSize: "12px", color: "#64748b" }}>Preview as:</span>
                 <select
                   value={selectedPreviewIdx}
@@ -1076,7 +1386,14 @@ ${landingContent}
 
             <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
               {/* Tab Switcher: Email vs Landing */}
-              <div style={{ display: "flex", background: "#f1f5f9", padding: "3px", borderRadius: "6px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  background: "#f1f5f9",
+                  padding: "3px",
+                  borderRadius: "6px",
+                }}
+              >
                 <button
                   type="button"
                   onClick={() => setPreviewTab("email")}
@@ -1112,7 +1429,15 @@ ${landingContent}
               </div>
 
               {/* Device Viewport Mode Switcher */}
-              <div style={{ display: "flex", background: "#f1f5f9", padding: "3px", borderRadius: "6px", gap: "2px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  background: "#f1f5f9",
+                  padding: "3px",
+                  borderRadius: "6px",
+                  gap: "2px",
+                }}
+              >
                 <button
                   type="button"
                   onClick={() => setViewportMode("desktop")}
@@ -1180,8 +1505,23 @@ ${landingContent}
                 }}
               >
                 {/* Speaker Notch */}
-                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", padding: "10px 0 6px 0", background: "#0f172a" }}>
-                  <div style={{ width: "50px", height: "4px", borderRadius: "2px", background: "#334155" }} />
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    padding: "10px 0 6px 0",
+                    background: "#0f172a",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "50px",
+                      height: "4px",
+                      borderRadius: "2px",
+                      background: "#334155",
+                    }}
+                  />
                 </div>
 
                 {/* Mobile Viewport Scroll Area */}
@@ -1195,55 +1535,232 @@ ${landingContent}
                 >
                   {previewTab === "email" ? (
                     <div style={{ background: "#ffffff", color: "#1e293b" }}>
-                      <div style={{ background: "#4f46e5", padding: "20px 16px", textAlign: "center", color: "#ffffff" }}>
-                        <h1 style={{ margin: 0, fontSize: "18px", fontWeight: "700" }}>Hello, {activeRecipient.first_name}!</h1>
-                        <p style={{ margin: "4px 0 0 0", opacity: 0.9, fontSize: "12px" }}>A personal note from {orgName}</p>
+                      <div
+                        style={{
+                          background: "#4f46e5",
+                          padding: "20px 16px",
+                          textAlign: "center",
+                          color: "#ffffff",
+                        }}
+                      >
+                        <h1 style={{ margin: 0, fontSize: "18px", fontWeight: "700" }}>
+                          Hello, {activeRecipient.first_name}!
+                        </h1>
+                        <p style={{ margin: "4px 0 0 0", opacity: 0.9, fontSize: "12px" }}>
+                          A personal note from {orgName}
+                        </p>
                       </div>
-                      <div style={{ padding: "18px 16px", fontSize: "14px", lineHeight: "1.6", color: "#334155" }}>
-                        <p style={{ margin: "0 0 12px 0" }}>Hi <strong>{activeRecipient.first_name}</strong>,</p>
-                        <div style={{ background: "#f8fafc", borderLeft: "3px solid #4f46e5", padding: "12px", margin: "14px 0", borderRadius: "4px", fontStyle: "italic", color: "#1e293b", fontSize: "13px" }}>
+                      <div
+                        style={{
+                          padding: "18px 16px",
+                          fontSize: "14px",
+                          lineHeight: "1.6",
+                          color: "#334155",
+                        }}
+                      >
+                        <p style={{ margin: "0 0 12px 0" }}>
+                          Hi <strong>{activeRecipient.first_name}</strong>,
+                        </p>
+                        <div
+                          style={{
+                            background: "#f8fafc",
+                            borderLeft: "3px solid #4f46e5",
+                            padding: "12px",
+                            margin: "14px 0",
+                            borderRadius: "4px",
+                            fontStyle: "italic",
+                            color: "#1e293b",
+                            fontSize: "13px",
+                          }}
+                        >
                           "{previewIntro}"
                         </div>
-                        <p style={{ fontSize: "13px" }}>We created a private, interactive landing page for you to view more details and reply directly:</p>
+                        <p style={{ fontSize: "13px" }}>
+                          We created a private, interactive landing page for you to view more
+                          details and reply directly:
+                        </p>
                         <div style={{ textAlign: "center", margin: "20px 0" }}>
-                          <span style={{ background: "#4f46e5", color: "#ffffff", padding: "10px 20px", borderRadius: "6px", fontWeight: "600", fontSize: "14px", display: "inline-block" }}>
+                          <span
+                            style={{
+                              background: "#4f46e5",
+                              color: "#ffffff",
+                              padding: "10px 20px",
+                              borderRadius: "6px",
+                              fontWeight: "600",
+                              fontSize: "14px",
+                              display: "inline-block",
+                            }}
+                          >
                             {buttonText}
                           </span>
                         </div>
                       </div>
-                      <div style={{ background: "#f9fafb", borderTop: "1px solid #e2e8f0", padding: "12px", textAlign: "center", fontSize: "10px", color: "#94a3b8" }}>
+                      <div
+                        style={{
+                          background: "#f9fafb",
+                          borderTop: "1px solid #e2e8f0",
+                          padding: "12px",
+                          textAlign: "center",
+                          fontSize: "10px",
+                          color: "#94a3b8",
+                        }}
+                      >
                         Delivered to {activeRecipient.email} · One-Click Unsubscribe
                       </div>
                     </div>
                   ) : (
-                    <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "20px", color: "#0f172a" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "12px" }}>
-                        <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#10b981" }} />
-                        <span style={{ fontSize: "10px", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: "600" }}>
+                    <div
+                      style={{
+                        background: "#ffffff",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "10px",
+                        padding: "20px",
+                        color: "#0f172a",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          marginBottom: "12px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "8px",
+                            height: "8px",
+                            borderRadius: "50%",
+                            background: "#10b981",
+                          }}
+                        />
+                        <span
+                          style={{
+                            fontSize: "10px",
+                            color: "#64748b",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                            fontWeight: "600",
+                          }}
+                        >
                           Verified Private Message
                         </span>
                       </div>
-                      <h2 style={{ fontSize: "18px", fontWeight: "700", margin: "0 0 12px 0", color: "#0f172a" }}>
+                      <h2
+                        style={{
+                          fontSize: "18px",
+                          fontWeight: "700",
+                          margin: "0 0 12px 0",
+                          color: "#0f172a",
+                        }}
+                      >
                         Hello, {activeRecipient.first_name}
                       </h2>
-                      <div style={{ background: "#f8fafc", borderLeft: "3px solid #4f46e5", padding: "14px", borderRadius: "6px", margin: "14px 0", fontSize: "13px", lineHeight: "1.5", color: "#334155", whiteSpace: "pre-wrap" }}>
+                      <div
+                        style={{
+                          background: "#f8fafc",
+                          borderLeft: "3px solid #4f46e5",
+                          padding: "14px",
+                          borderRadius: "6px",
+                          margin: "14px 0",
+                          fontSize: "13px",
+                          lineHeight: "1.5",
+                          color: "#334155",
+                          whiteSpace: "pre-wrap",
+                        }}
+                      >
                         {previewLandingBody}
                       </div>
                       {allowReplies && (
-                        <div style={{ marginTop: "16px", padding: "14px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+                        <div
+                          style={{
+                            marginTop: "16px",
+                            padding: "14px",
+                            background: "#f8fafc",
+                            borderRadius: "8px",
+                            border: "1px solid #e2e8f0",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              marginBottom: "8px",
+                            }}
+                          >
                             <span>💬</span>
-                            <strong style={{ fontSize: "13px", color: "#0f172a" }}>Reply to {orgName}</strong>
+                            <strong style={{ fontSize: "13px", color: "#0f172a" }}>
+                              Reply to {orgName}
+                            </strong>
                           </div>
                           {mode === "broadcast" && (
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "8px", marginBottom: "8px" }}>
-                              <input disabled placeholder="Your Name" style={{ background: "#ffffff", border: "1px solid #cbd5e1", padding: "6px 8px", borderRadius: "6px", fontSize: "11px", color: "#64748b" }} />
-                              <input disabled placeholder="Your Email" style={{ background: "#ffffff", border: "1px solid #cbd5e1", padding: "6px 8px", borderRadius: "6px", fontSize: "11px", color: "#64748b" }} />
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns: "1fr",
+                                gap: "8px",
+                                marginBottom: "8px",
+                              }}
+                            >
+                              <input
+                                disabled
+                                placeholder="Your Name"
+                                style={{
+                                  background: "#ffffff",
+                                  border: "1px solid #cbd5e1",
+                                  padding: "6px 8px",
+                                  borderRadius: "6px",
+                                  fontSize: "11px",
+                                  color: "#64748b",
+                                }}
+                              />
+                              <input
+                                disabled
+                                placeholder="Your Email"
+                                style={{
+                                  background: "#ffffff",
+                                  border: "1px solid #cbd5e1",
+                                  padding: "6px 8px",
+                                  borderRadius: "6px",
+                                  fontSize: "11px",
+                                  color: "#64748b",
+                                }}
+                              />
                             </div>
                           )}
-                          <textarea disabled rows={2} placeholder="Write a confidential reply..." style={{ width: "100%", boxSizing: "border-box", background: "#ffffff", border: "1px solid #cbd5e1", padding: "6px 8px", borderRadius: "6px", fontSize: "11px", color: "#64748b" }} />
-                          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6px" }}>
-                            <span style={{ background: "#4f46e5", color: "#fff", padding: "5px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: "600" }}>
+                          <textarea
+                            disabled
+                            rows={2}
+                            placeholder="Write a confidential reply..."
+                            style={{
+                              width: "100%",
+                              boxSizing: "border-box",
+                              background: "#ffffff",
+                              border: "1px solid #cbd5e1",
+                              padding: "6px 8px",
+                              borderRadius: "6px",
+                              fontSize: "11px",
+                              color: "#64748b",
+                            }}
+                          />
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "flex-end",
+                              marginTop: "6px",
+                            }}
+                          >
+                            <span
+                              style={{
+                                background: "#4f46e5",
+                                color: "#fff",
+                                padding: "5px 10px",
+                                borderRadius: "6px",
+                                fontSize: "11px",
+                                fontWeight: "600",
+                              }}
+                            >
                               Send Reply →
                             </span>
                           </div>
@@ -1254,8 +1771,22 @@ ${landingContent}
                 </div>
 
                 {/* Home Indicator Bar */}
-                <div style={{ display: "flex", justifyContent: "center", padding: "8px 0", background: "#0f172a" }}>
-                  <div style={{ width: "90px", height: "4px", borderRadius: "2px", background: "#334155" }} />
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    padding: "8px 0",
+                    background: "#0f172a",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "90px",
+                      height: "4px",
+                      borderRadius: "2px",
+                      background: "#334155",
+                    }}
+                  />
                 </div>
               </div>
             ) : previewTab === "email" ? (
@@ -1272,23 +1803,70 @@ ${landingContent}
                   color: "#1e293b",
                 }}
               >
-                <div style={{ background: "#4f46e5", padding: "28px", textAlign: "center", color: "#ffffff" }}>
-                  <h1 style={{ margin: 0, fontSize: "22px", fontWeight: "700" }}>Hello, {activeRecipient.first_name}!</h1>
-                  <p style={{ margin: "6px 0 0 0", opacity: 0.9, fontSize: "14px" }}>A personal note from {orgName}</p>
+                <div
+                  style={{
+                    background: "#4f46e5",
+                    padding: "28px",
+                    textAlign: "center",
+                    color: "#ffffff",
+                  }}
+                >
+                  <h1 style={{ margin: 0, fontSize: "22px", fontWeight: "700" }}>
+                    Hello, {activeRecipient.first_name}!
+                  </h1>
+                  <p style={{ margin: "6px 0 0 0", opacity: 0.9, fontSize: "14px" }}>
+                    A personal note from {orgName}
+                  </p>
                 </div>
-                <div style={{ padding: "28px", fontSize: "15px", lineHeight: "1.6", color: "#334155" }}>
-                  <p style={{ margin: "0 0 16px 0" }}>Hi <strong>{activeRecipient.first_name}</strong>,</p>
-                  <div style={{ background: "#f8fafc", borderLeft: "3px solid #4f46e5", padding: "14px", margin: "18px 0", borderRadius: "4px", fontStyle: "italic", color: "#1e293b" }}>
+                <div
+                  style={{ padding: "28px", fontSize: "15px", lineHeight: "1.6", color: "#334155" }}
+                >
+                  <p style={{ margin: "0 0 16px 0" }}>
+                    Hi <strong>{activeRecipient.first_name}</strong>,
+                  </p>
+                  <div
+                    style={{
+                      background: "#f8fafc",
+                      borderLeft: "3px solid #4f46e5",
+                      padding: "14px",
+                      margin: "18px 0",
+                      borderRadius: "4px",
+                      fontStyle: "italic",
+                      color: "#1e293b",
+                    }}
+                  >
                     "{previewIntro}"
                   </div>
-                  <p>We created a private, interactive landing page for you to view more details and reply directly:</p>
+                  <p>
+                    We created a private, interactive landing page for you to view more details and
+                    reply directly:
+                  </p>
                   <div style={{ textAlign: "center", margin: "28px 0" }}>
-                    <span style={{ background: "#4f46e5", color: "#ffffff", padding: "10px 22px", borderRadius: "6px", fontWeight: "600", fontSize: "14px", display: "inline-block" }}>
+                    <span
+                      style={{
+                        background: "#4f46e5",
+                        color: "#ffffff",
+                        padding: "10px 22px",
+                        borderRadius: "6px",
+                        fontWeight: "600",
+                        fontSize: "14px",
+                        display: "inline-block",
+                      }}
+                    >
                       {buttonText}
                     </span>
                   </div>
                 </div>
-                <div style={{ background: "#f9fafb", borderTop: "1px solid #e2e8f0", padding: "16px", textAlign: "center", fontSize: "11px", color: "#94a3b8" }}>
+                <div
+                  style={{
+                    background: "#f9fafb",
+                    borderTop: "1px solid #e2e8f0",
+                    padding: "16px",
+                    textAlign: "center",
+                    fontSize: "11px",
+                    color: "#94a3b8",
+                  }}
+                >
                   Delivered to {activeRecipient.email} · One-Click Unsubscribe
                 </div>
               </div>
@@ -1306,34 +1884,144 @@ ${landingContent}
                   boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
-                  <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#10b981" }} />
-                  <span style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: "600" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    marginBottom: "16px",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      background: "#10b981",
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      color: "#64748b",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      fontWeight: "600",
+                    }}
+                  >
                     Verified Private Message
                   </span>
                 </div>
-                <h2 style={{ fontSize: "22px", fontWeight: "700", margin: "0 0 16px 0", color: "#0f172a" }}>
+                <h2
+                  style={{
+                    fontSize: "22px",
+                    fontWeight: "700",
+                    margin: "0 0 16px 0",
+                    color: "#0f172a",
+                  }}
+                >
                   Hello, {activeRecipient.first_name}
                 </h2>
-                <div style={{ background: "#f8fafc", borderLeft: "3px solid #4f46e5", padding: "18px", borderRadius: "6px", margin: "20px 0", fontSize: "15px", lineHeight: "1.6", color: "#334155", whiteSpace: "pre-wrap" }}>
+                <div
+                  style={{
+                    background: "#f8fafc",
+                    borderLeft: "3px solid #4f46e5",
+                    padding: "18px",
+                    borderRadius: "6px",
+                    margin: "20px 0",
+                    fontSize: "15px",
+                    lineHeight: "1.6",
+                    color: "#334155",
+                    whiteSpace: "pre-wrap",
+                  }}
+                >
                   {previewLandingBody}
                 </div>
 
                 {allowReplies && (
-                  <div style={{ marginTop: "24px", padding: "18px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+                  <div
+                    style={{
+                      marginTop: "24px",
+                      padding: "18px",
+                      background: "#f8fafc",
+                      borderRadius: "8px",
+                      border: "1px solid #e2e8f0",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        marginBottom: "8px",
+                      }}
+                    >
                       <span>💬</span>
-                      <strong style={{ fontSize: "14px", color: "#0f172a" }}>Reply directly to {orgName}</strong>
+                      <strong style={{ fontSize: "14px", color: "#0f172a" }}>
+                        Reply directly to {orgName}
+                      </strong>
                     </div>
                     {mode === "broadcast" && (
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
-                        <input disabled placeholder="Your Name" style={{ background: "#ffffff", border: "1px solid #cbd5e1", padding: "8px", borderRadius: "6px", fontSize: "12px", color: "#64748b" }} />
-                        <input disabled placeholder="Your Email" style={{ background: "#ffffff", border: "1px solid #cbd5e1", padding: "8px", borderRadius: "6px", fontSize: "12px", color: "#64748b" }} />
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr",
+                          gap: "10px",
+                          marginBottom: "10px",
+                        }}
+                      >
+                        <input
+                          disabled
+                          placeholder="Your Name"
+                          style={{
+                            background: "#ffffff",
+                            border: "1px solid #cbd5e1",
+                            padding: "8px",
+                            borderRadius: "6px",
+                            fontSize: "12px",
+                            color: "#64748b",
+                          }}
+                        />
+                        <input
+                          disabled
+                          placeholder="Your Email"
+                          style={{
+                            background: "#ffffff",
+                            border: "1px solid #cbd5e1",
+                            padding: "8px",
+                            borderRadius: "6px",
+                            fontSize: "12px",
+                            color: "#64748b",
+                          }}
+                        />
                       </div>
                     )}
-                    <textarea disabled rows={2} placeholder="Write a confidential reply..." style={{ width: "100%", boxSizing: "border-box", background: "#ffffff", border: "1px solid #cbd5e1", padding: "8px", borderRadius: "6px", fontSize: "12px", color: "#64748b" }} />
+                    <textarea
+                      disabled
+                      rows={2}
+                      placeholder="Write a confidential reply..."
+                      style={{
+                        width: "100%",
+                        boxSizing: "border-box",
+                        background: "#ffffff",
+                        border: "1px solid #cbd5e1",
+                        padding: "8px",
+                        borderRadius: "6px",
+                        fontSize: "12px",
+                        color: "#64748b",
+                      }}
+                    />
                     <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "8px" }}>
-                      <span style={{ background: "#4f46e5", color: "#fff", padding: "6px 14px", borderRadius: "6px", fontSize: "12px", fontWeight: "600" }}>
+                      <span
+                        style={{
+                          background: "#4f46e5",
+                          color: "#fff",
+                          padding: "6px 14px",
+                          borderRadius: "6px",
+                          fontSize: "12px",
+                          fontWeight: "600",
+                        }}
+                      >
                         Send Reply →
                       </span>
                     </div>
@@ -1379,8 +2067,20 @@ ${landingContent}
 
       {/* STEP 4: EXPORT OR SEND */}
       {activeStep === "export_send" && (
-        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "28px", boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)" }}>
-          <h2 style={{ fontSize: "20px", fontWeight: "700", margin: "0 0 6px 0", color: "#0f172a" }}>Fulfillment: Export Links or Send Directly</h2>
+        <div
+          style={{
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
+            borderRadius: "12px",
+            padding: "28px",
+            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
+          }}
+        >
+          <h2
+            style={{ fontSize: "20px", fontWeight: "700", margin: "0 0 6px 0", color: "#0f172a" }}
+          >
+            Fulfillment: Export Links or Send Directly
+          </h2>
           <p style={{ color: "#64748b", fontSize: "14px", margin: "0 0 24px 0" }}>
             {mode === "personalized"
               ? "You can export the CSV with each person's unique dynamic link to use in your own mailer, OR send the intro emails directly through this platform."
@@ -1406,7 +2106,13 @@ ${landingContent}
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 <span style={{ fontSize: "20px" }}>{isDomainVerified ? "🛡️" : "⚠️"}</span>
                 <div>
-                  <div style={{ fontSize: "14px", fontWeight: "700", color: isDomainVerified ? "#065f46" : "#92400e" }}>
+                  <div
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: "700",
+                      color: isDomainVerified ? "#065f46" : "#92400e",
+                    }}
+                  >
                     Sender Domain: {sendingDomain} ({isDomainVerified ? "Verified" : "Unverified"})
                   </div>
                   <div style={{ fontSize: "12px", color: "#64748b" }}>
@@ -1437,7 +2143,14 @@ ${landingContent}
 
           {/* Action Cards */}
           {mode === "personalized" ? (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "28px" }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "20px",
+                marginBottom: "28px",
+              }}
+            >
               {/* Option A: Export CSV */}
               <div
                 style={{
@@ -1451,15 +2164,44 @@ ${landingContent}
                 }}
               >
                 <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      marginBottom: "10px",
+                    }}
+                  >
                     <span style={{ fontSize: "20px" }}>📥</span>
-                    <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "700", color: "#0f172a" }}>Export CSV with Unique Links</h3>
+                    <h3
+                      style={{ margin: 0, fontSize: "16px", fontWeight: "700", color: "#0f172a" }}
+                    >
+                      Export CSV with Unique Links
+                    </h3>
                   </div>
-                  <p style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.5", margin: "0 0 16px 0" }}>
-                    Generate individual token-protected pages for all {recipients.length} recipients, and download a CSV with
-                    `email, first_name, sex, landing_link`.
+                  <p
+                    style={{
+                      fontSize: "13px",
+                      color: "#64748b",
+                      lineHeight: "1.5",
+                      margin: "0 0 16px 0",
+                    }}
+                  >
+                    Generate individual token-protected pages for all {recipients.length}{" "}
+                    recipients, and download a CSV with `email, first_name, sex, landing_link`.
                   </p>
-                  <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", padding: "10px", borderRadius: "6px", fontSize: "12px", color: "#64748b", fontFamily: "ui-monospace, monospace", marginBottom: "20px" }}>
+                  <div
+                    style={{
+                      background: "#ffffff",
+                      border: "1px solid #e2e8f0",
+                      padding: "10px",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      color: "#64748b",
+                      fontFamily: "ui-monospace, monospace",
+                      marginBottom: "20px",
+                    }}
+                  >
                     email, first_name, sex, landing_link
                   </div>
                 </div>
@@ -1498,14 +2240,41 @@ ${landingContent}
                 }}
               >
                 <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      marginBottom: "10px",
+                    }}
+                  >
                     <span style={{ fontSize: "20px" }}>🚀</span>
-                    <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "700", color: "#0f172a" }}>Send via Our Platform</h3>
+                    <h3
+                      style={{ margin: 0, fontSize: "16px", fontWeight: "700", color: "#0f172a" }}
+                    >
+                      Send via Our Platform
+                    </h3>
                   </div>
-                  <p style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.5", margin: "0 0 16px 0" }}>
-                    We automatically dispatch the customized intro email to each person's inbox with their unique button link to the private dynamic page.
+                  <p
+                    style={{
+                      fontSize: "13px",
+                      color: "#64748b",
+                      lineHeight: "1.5",
+                      margin: "0 0 16px 0",
+                    }}
+                  >
+                    We automatically dispatch the customized intro email to each person's inbox with
+                    their unique button link to the private dynamic page.
                   </p>
-                  <ul style={{ margin: "0 0 20px 0", paddingLeft: "18px", fontSize: "12px", color: "#475569", lineHeight: "1.6" }}>
+                  <ul
+                    style={{
+                      margin: "0 0 20px 0",
+                      paddingLeft: "18px",
+                      fontSize: "12px",
+                      color: "#475569",
+                      lineHeight: "1.6",
+                    }}
+                  >
                     <li>Delivers via background engine (Listmonk + BullMQ)</li>
                     <li>Immune to email scanner false-open tracking</li>
                     <li>Direct two-way replies delivered to your Inbox tab</li>
@@ -1535,16 +2304,39 @@ ${landingContent}
             </div>
           ) : (
             /* Broadcast WhatsApp Share Card */
-            <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "28px", maxWidth: "600px", margin: "0 auto 28px auto" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" }}>
+            <div
+              style={{
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                borderRadius: "10px",
+                padding: "28px",
+                maxWidth: "600px",
+                margin: "0 auto 28px auto",
+              }}
+            >
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" }}
+              >
                 <span style={{ fontSize: "24px" }}>💬</span>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: "17px", fontWeight: "700", color: "#0f172a" }}>WhatsApp & Social Broadcast Link</h3>
-                  <span style={{ fontSize: "12px", color: "#64748b" }}>Single shared link for groups</span>
+                  <h3 style={{ margin: 0, fontSize: "17px", fontWeight: "700", color: "#0f172a" }}>
+                    WhatsApp & Social Broadcast Link
+                  </h3>
+                  <span style={{ fontSize: "12px", color: "#64748b" }}>
+                    Single shared link for groups
+                  </span>
                 </div>
               </div>
-              <p style={{ fontSize: "13px", color: "#475569", lineHeight: "1.5", marginBottom: "20px" }}>
-                Click below to generate the universal link. Anyone in your WhatsApp group can open the page, and if they submit a reply, they will be prompted for their Name & Email.
+              <p
+                style={{
+                  fontSize: "13px",
+                  color: "#475569",
+                  lineHeight: "1.5",
+                  marginBottom: "20px",
+                }}
+              >
+                Click below to generate the universal link. Anyone in your WhatsApp group can open
+                the page, and if they submit a reply, they will be prompted for their Name & Email.
               </p>
               <button
                 disabled={loading}
@@ -1568,8 +2360,24 @@ ${landingContent}
 
           {/* Generated Result Display Banner */}
           {executionResult && (
-            <div style={{ background: "#ecfdf5", border: "1px solid #a7f3d0", borderRadius: "8px", padding: "20px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
+            <div
+              style={{
+                background: "#ecfdf5",
+                border: "1px solid #a7f3d0",
+                borderRadius: "8px",
+                padding: "20px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "16px",
+                  flexWrap: "wrap",
+                  gap: "10px",
+                }}
+              >
                 <div>
                   <div style={{ fontSize: "15px", fontWeight: "700", color: "#065f46" }}>
                     ✓ Campaign Created & Active ({executionResult.campaignName})
@@ -1578,8 +2386,8 @@ ${landingContent}
                     {executionResult.dispatchViaPlatform
                       ? `Delivering ${executionResult.recipients.length} personalized emails with dynamic links.`
                       : mode === "broadcast"
-                      ? "Public broadcast link is live and tracking views."
-                      : `Successfully generated ${executionResult.recipients.length} unique recipient landing links.`}
+                        ? "Public broadcast link is live and tracking views."
+                        : `Successfully generated ${executionResult.recipients.length} unique recipient landing links.`}
                   </div>
                 </div>
 
@@ -1622,8 +2430,26 @@ ${landingContent}
               </div>
 
               {/* Sample link box */}
-              <div style={{ background: "#ffffff", border: "1px solid #a7f3d0", padding: "10px 14px", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
-                <span style={{ fontSize: "13px", color: "#065f46", wordBreak: "break-all", fontFamily: "ui-monospace, monospace" }}>
+              <div
+                style={{
+                  background: "#ffffff",
+                  border: "1px solid #a7f3d0",
+                  padding: "10px 14px",
+                  borderRadius: "6px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "12px",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "13px",
+                    color: "#065f46",
+                    wordBreak: "break-all",
+                    fontFamily: "ui-monospace, monospace",
+                  }}
+                >
                   {executionResult.sharedUrl || executionResult.landingUrl}
                 </span>
                 <a
@@ -1648,12 +2474,37 @@ ${landingContent}
 
       {/* STEP 5: REPLIES & INBOX */}
       {activeStep === "inbox" && (
-        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "28px", boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+        <div
+          style={{
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
+            borderRadius: "12px",
+            padding: "28px",
+            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "20px",
+            }}
+          >
             <div>
-              <h2 style={{ fontSize: "20px", fontWeight: "700", margin: "0 0 4px 0", color: "#0f172a" }}>Recipient Replies & Responses</h2>
+              <h2
+                style={{
+                  fontSize: "20px",
+                  fontWeight: "700",
+                  margin: "0 0 4px 0",
+                  color: "#0f172a",
+                }}
+              >
+                Recipient Replies & Responses
+              </h2>
               <p style={{ color: "#64748b", fontSize: "14px", margin: 0 }}>
-                Two-way communication from both personalized contact links and WhatsApp group respondents.
+                Two-way communication from both personalized contact links and WhatsApp group
+                respondents.
               </p>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -1698,13 +2549,42 @@ ${landingContent}
           </div>
 
           {loadingReplies ? (
-            <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>Loading replies...</div>
+            <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
+              Loading replies...
+            </div>
           ) : repliesList.length === 0 ? (
-            <div style={{ border: "2px dashed #cbd5e1", borderRadius: "8px", padding: "48px 24px", textAlign: "center", background: "#f8fafc" }}>
+            <div
+              style={{
+                border: "2px dashed #cbd5e1",
+                borderRadius: "8px",
+                padding: "48px 24px",
+                textAlign: "center",
+                background: "#f8fafc",
+              }}
+            >
               <span style={{ fontSize: "36px" }}>📬</span>
-              <h3 style={{ fontSize: "16px", color: "#0f172a", margin: "12px 0 6px 0", fontWeight: "600" }}>No replies received yet</h3>
-              <p style={{ fontSize: "13px", color: "#64748b", margin: "0 0 16px 0", maxWidth: "450px", marginLeft: "auto", marginRight: "auto" }}>
-                When recipients open their private page and submit a reply, it will appear here instantly with their profile details.
+              <h3
+                style={{
+                  fontSize: "16px",
+                  color: "#0f172a",
+                  margin: "12px 0 6px 0",
+                  fontWeight: "600",
+                }}
+              >
+                No replies received yet
+              </h3>
+              <p
+                style={{
+                  fontSize: "13px",
+                  color: "#64748b",
+                  margin: "0 0 16px 0",
+                  maxWidth: "450px",
+                  marginLeft: "auto",
+                  marginRight: "auto",
+                }}
+              >
+                When recipients open their private page and submit a reply, it will appear here
+                instantly with their profile details.
               </p>
               {executionResult?.landingUrl && (
                 <a
@@ -1738,27 +2618,66 @@ ${landingContent}
                     padding: "16px 18px",
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: "8px",
+                    }}
+                  >
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                       <strong style={{ fontSize: "14px", color: "#0f172a" }}>{reply.name}</strong>
                       <span style={{ fontSize: "12px", color: "#4f46e5" }}>({reply.email})</span>
                       {reply.sex && (
-                        <span style={{ fontSize: "11px", background: "#ffffff", color: "#475569", border: "1px solid #cbd5e1", padding: "1px 6px", borderRadius: "4px" }}>
+                        <span
+                          style={{
+                            fontSize: "11px",
+                            background: "#ffffff",
+                            color: "#475569",
+                            border: "1px solid #cbd5e1",
+                            padding: "1px 6px",
+                            borderRadius: "4px",
+                          }}
+                        >
                           {reply.sex}
                         </span>
                       )}
                       {reply.isBroadcast && (
-                        <span style={{ fontSize: "11px", background: "#ecfdf5", color: "#065f46", border: "1px solid #a7f3d0", padding: "1px 6px", borderRadius: "4px" }}>
+                        <span
+                          style={{
+                            fontSize: "11px",
+                            background: "#ecfdf5",
+                            color: "#065f46",
+                            border: "1px solid #a7f3d0",
+                            padding: "1px 6px",
+                            borderRadius: "4px",
+                          }}
+                        >
                           WhatsApp / Public Reply
                         </span>
                       )}
                     </div>
                     <span style={{ fontSize: "11px", color: "#64748b" }}>
-                      {new Date(reply.createdAt).toLocaleTimeString()} · {new Date(reply.createdAt).toLocaleDateString()}
+                      {new Date(reply.createdAt).toLocaleTimeString()} ·{" "}
+                      {new Date(reply.createdAt).toLocaleDateString()}
                     </span>
                   </div>
 
-                  <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderLeft: "3px solid #cbd5e1", padding: "10px 14px", borderRadius: "4px", margin: "0 0 10px 0", fontSize: "13px", color: "#334155", lineHeight: "1.5", whiteSpace: "pre-wrap" }}>
+                  <div
+                    style={{
+                      background: "#ffffff",
+                      border: "1px solid #e2e8f0",
+                      borderLeft: "3px solid #cbd5e1",
+                      padding: "10px 14px",
+                      borderRadius: "4px",
+                      margin: "0 0 10px 0",
+                      fontSize: "13px",
+                      color: "#334155",
+                      lineHeight: "1.5",
+                      whiteSpace: "pre-wrap",
+                    }}
+                  >
                     "{reply.body}"
                   </div>
 
@@ -1810,21 +2729,52 @@ ${landingContent}
               boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-              <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "700", color: "#0f172a" }}>Domain Verification (DKIM & SPF)</h3>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "16px",
+              }}
+            >
+              <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "700", color: "#0f172a" }}>
+                Domain Verification (DKIM & SPF)
+              </h3>
               <button
                 onClick={() => setShowDomainModal(false)}
-                style={{ background: "transparent", border: "none", color: "#64748b", fontSize: "20px", cursor: "pointer" }}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "#64748b",
+                  fontSize: "20px",
+                  cursor: "pointer",
+                }}
               >
                 ✕
               </button>
             </div>
-            <p style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.5", margin: "0 0 18px 0" }}>
-              To ensure emails arrive in inboxes instead of spam folders, verify your sending domain with your DNS provider (Cloudflare, GoDaddy, AWS Route53).
+            <p
+              style={{
+                fontSize: "13px",
+                color: "#64748b",
+                lineHeight: "1.5",
+                margin: "0 0 18px 0",
+              }}
+            >
+              To ensure emails arrive in inboxes instead of spam folders, verify your sending domain
+              with your DNS provider (Cloudflare, GoDaddy, AWS Route53).
             </p>
 
             <div style={{ marginBottom: "16px" }}>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  color: "#334155",
+                  marginBottom: "6px",
+                }}
+              >
                 Domain Name
               </label>
               <input
@@ -1844,12 +2794,35 @@ ${landingContent}
               />
             </div>
 
-            <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "14px", marginBottom: "18px" }}>
-              <div style={{ fontSize: "12px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+            <div
+              style={{
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                borderRadius: "6px",
+                padding: "14px",
+                marginBottom: "18px",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  color: "#334155",
+                  marginBottom: "6px",
+                }}
+              >
                 Required DNS TXT Records:
               </div>
-              <div style={{ fontSize: "12px", color: "#475569", fontFamily: "ui-monospace, monospace", lineHeight: "1.6" }}>
-                <strong>SPF:</strong> TXT @ "v=spf1 include:_spf.{sendingDomain} ~all"<br />
+              <div
+                style={{
+                  fontSize: "12px",
+                  color: "#475569",
+                  fontFamily: "ui-monospace, monospace",
+                  lineHeight: "1.6",
+                }}
+              >
+                <strong>SPF:</strong> TXT @ "v=spf1 include:_spf.{sendingDomain} ~all"
+                <br />
                 <strong>DMARC:</strong> TXT _dmarc "v=DMARC1; p=none; sp=none;"
               </div>
             </div>

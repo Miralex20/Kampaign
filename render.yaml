@@ -1,0 +1,95 @@
+databases:
+  - name: campaign-db
+    databaseName: campaign_db
+    user: campaign
+    plan: free
+    region: frankfurt
+    postgresMajorVersion: 16
+
+services:
+  - type: redis
+    name: campaign-redis
+    plan: free
+    region: frankfurt
+    maxmemoryPolicy: noeviction
+    ipAllowList: []
+
+  - type: web
+    name: campaign-web
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @campaign/db build && pnpm --filter @campaign/core build && pnpm --filter @campaign/web build
+    # For full free tier without payment method, the background worker can run concurrently alongside the Next.js web server:
+    startCommand: pnpm --filter @campaign/db db:migrate && (pnpm --filter @campaign/worker start & pnpm --filter @campaign/web start)
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: campaign-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: campaign-redis
+          property: connectionString
+      - key: APP_BASE_URL
+        generateValue: true
+      - key: LINK_BASE_URL
+        generateValue: true
+      - key: AUTH_SECRET
+        generateValue: true
+      - key: TOKEN_ENCRYPTION_KEY
+        generateValue: true
+      - key: EMAIL_WEBHOOK_SECRET
+        generateValue: true
+      - key: LISTMONK_BASE_URL
+        value: http://localhost:9000
+      - key: LISTMONK_TX_TEMPLATE_ID
+        value: "1"
+      - key: SUPERADMIN_EMAILS
+        sync: false
+      - key: EMAIL_SERVER_HOST
+        sync: false
+      - key: EMAIL_SERVER_PORT
+        value: "587"
+      - key: EMAIL_SERVER_USER
+        sync: false
+      - key: EMAIL_SERVER_PASSWORD
+        sync: false
+      - key: EMAIL_FROM
+        value: "Campaign Platform <noreply@yourdomain.com>"
+
+  # NOTE: Dedicated worker service below is for accounts with payment info added (plan: starter).
+  # To enable, uncomment the block below:
+  # - type: worker
+  #   name: campaign-worker
+  #   runtime: node
+  #   plan: starter
+  #   region: frankfurt
+  #   buildCommand: pnpm install --frozen-lockfile && pnpm --filter @campaign/db build && pnpm --filter @campaign/core build && pnpm --filter @campaign/worker build
+  #   startCommand: pnpm --filter @campaign/worker start
+  #   envVars:
+  #     - key: NODE_ENV
+  #       value: production
+  #     - key: DATABASE_URL
+  #       fromDatabase:
+  #         name: campaign-db
+  #         property: connectionString
+  #     - key: REDIS_URL
+  #       fromService:
+  #         type: redis
+  #         name: campaign-redis
+  #         property: connectionString
+  #     - key: TOKEN_ENCRYPTION_KEY
+  #       fromService:
+  #         type: web
+  #         name: campaign-web
+  #         envVarKey: TOKEN_ENCRYPTION_KEY
+  #     - key: LINK_BASE_URL
+  #       fromService:
+  #         type: web
+  #         name: campaign-web
+  #         property: host

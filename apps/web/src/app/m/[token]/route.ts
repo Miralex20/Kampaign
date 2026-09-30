@@ -392,7 +392,11 @@ export async function GET(
 
     // Check expiry (message-level takes precedence over campaign-level)
     const [campaign] = await db
-      .select({ expires_at: campaigns.expires_at, page_html: campaigns.page_html, allow_replies: campaigns.allow_replies })
+      .select({
+        expires_at: campaigns.expires_at,
+        page_html: campaigns.page_html,
+        allow_replies: campaigns.allow_replies,
+      })
       .from(campaigns)
       .where(eq(campaigns.id, message.campaign_id))
       .limit(1);
@@ -407,17 +411,16 @@ export async function GET(
 
     // Scanner/bot detection
     const isScanner =
-      isScannerUA(ua) ||
-      isScannerTiming(
-        message.delivered_at,
-        message.sent_at,
-        new Date(),
-      );
+      isScannerUA(ua) || isScannerTiming(message.delivered_at, message.sent_at, new Date());
 
     if (isScanner) {
       // Serve page but write no DB events
       const [recipient] = await db
-        .select({ first_name: recipients.first_name, email: recipients.email, fields: recipients.fields })
+        .select({
+          first_name: recipients.first_name,
+          email: recipients.email,
+          fields: recipients.fields,
+        })
         .from(recipients)
         .where(eq(recipients.id, message.recipient_id))
         .limit(1);
@@ -458,7 +461,11 @@ export async function GET(
 
     // Render personalised page
     const [recipient] = await db
-      .select({ first_name: recipients.first_name, email: recipients.email, fields: recipients.fields })
+      .select({
+        first_name: recipients.first_name,
+        email: recipients.email,
+        fields: recipients.fields,
+      })
       .from(recipients)
       .where(eq(recipients.id, message.recipient_id))
       .limit(1);

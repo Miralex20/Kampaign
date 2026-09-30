@@ -25,15 +25,15 @@ import {
   otpLockedUntil,
   OTP_MAX_ATTEMPTS,
 } from "@campaign/core/otp";
-import {
-  createListmonkClient,
-  listmonkConfigFromEnv,
-} from "@campaign/core/listmonk";
+import { createListmonkClient, listmonkConfigFromEnv } from "@campaign/core/listmonk";
 
 const RequestSchema = z.object({ messageId: z.string().uuid() });
 const VerifySchema = z.object({
   messageId: z.string().uuid(),
-  code: z.string().length(6).regex(/^\d{6}$/, "Must be a 6-digit code"),
+  code: z
+    .string()
+    .length(6)
+    .regex(/^\d{6}$/, "Must be a 6-digit code"),
 });
 
 // ---------------------------------------------------------------------------
@@ -57,7 +57,11 @@ export async function requestOtp(request: Request): Promise<NextResponse> {
 
   // Validate message exists
   const [message] = await db
-    .select({ id: messages.id, recipient_id: messages.recipient_id, campaign_id: messages.campaign_id })
+    .select({
+      id: messages.id,
+      recipient_id: messages.recipient_id,
+      campaign_id: messages.campaign_id,
+    })
     .from(messages)
     .where(eq(messages.id, messageId))
     .limit(1);
@@ -89,16 +93,17 @@ export async function requestOtp(request: Request): Promise<NextResponse> {
 
   // Check existing OTP (don't regenerate if still valid)
   const [existing] = await db
-    .select({ id: otp_codes.id, expires_at: otp_codes.expires_at, locked_until: otp_codes.locked_until })
+    .select({
+      id: otp_codes.id,
+      expires_at: otp_codes.expires_at,
+      locked_until: otp_codes.locked_until,
+    })
     .from(otp_codes)
     .where(eq(otp_codes.message_id, messageId))
     .limit(1);
 
   if (existing?.locked_until && existing.locked_until > new Date()) {
-    return NextResponse.json(
-      { error: "Too many attempts. Try again later." },
-      { status: 429 },
-    );
+    return NextResponse.json({ error: "Too many attempts. Try again later." }, { status: 429 });
   }
 
   // Generate new OTP
@@ -182,10 +187,7 @@ export async function verifyOtpCode(request: Request): Promise<NextResponse> {
 
   // Check lockout
   if (otpRecord.locked_until && otpRecord.locked_until > new Date()) {
-    return NextResponse.json(
-      { error: "Account locked. Try again later." },
-      { status: 429 },
-    );
+    return NextResponse.json({ error: "Account locked. Try again later." }, { status: 429 });
   }
 
   // Check expiry

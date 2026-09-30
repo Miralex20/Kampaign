@@ -13,7 +13,8 @@ import { randomUUID } from "node:crypto";
 import { newToken, hashToken } from "@campaign/core/tokens";
 
 async function seed() {
-  const url = process.env["DATABASE_URL"] ?? "postgres://campaign:campaign_dev@localhost:5432/campaign_db";
+  const url =
+    process.env["DATABASE_URL"] ?? "postgres://campaign:campaign_dev@localhost:5432/campaign_db";
   console.log(`[seed] Connecting to ${url}...`);
 
   const client = new Client({ connectionString: url });

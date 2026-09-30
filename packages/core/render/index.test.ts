@@ -17,15 +17,13 @@ describe("render", () => {
   });
 
   it("HTML-escapes substituted values", () => {
-    const result = render("{{payload}}", { payload: '<script>alert(1)</script>' });
+    const result = render("{{payload}}", { payload: "<script>alert(1)</script>" });
     expect(result).toBe("&lt;script&gt;alert(1)&lt;/script&gt;");
     expect(result).not.toContain("<script>");
   });
 
   it("HTML-escapes ampersands and quotes in values", () => {
-    expect(render("{{v}}", { v: `AT&T says "hello"` })).toBe(
-      "AT&amp;T says &quot;hello&quot;",
-    );
+    expect(render("{{v}}", { v: `AT&T says "hello"` })).toBe("AT&amp;T says &quot;hello&quot;");
   });
 
   it("uses fallback when key is missing", () => {
@@ -63,16 +61,12 @@ describe("render", () => {
   });
 
   it("handles multiple placeholders in one string", () => {
-    expect(render("{{greeting}}, {{name}}!", { greeting: "Hi", name: "Bob" })).toBe(
-      "Hi, Bob!",
-    );
+    expect(render("{{greeting}}, {{name}}!", { greeting: "Hi", name: "Bob" })).toBe("Hi, Bob!");
   });
 
   it("does not escape the fallback text (static content, trusted)", () => {
     // Fallback comes from the template author (trusted), not from user data.
     // It is still HTML-escaped for consistency.
-    expect(render("{{name|<b>Unknown</b>}}", {})).toBe(
-      "&lt;b&gt;Unknown&lt;/b&gt;",
-    );
+    expect(render("{{name|<b>Unknown</b>}}", {})).toBe("&lt;b&gt;Unknown&lt;/b&gt;");
   });
 });

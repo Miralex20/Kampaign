@@ -37,7 +37,9 @@ const RecipientItemSchema = z.object({
 
 const QuickCreateSchema = z.object({
   name: z.string().min(1).max(200).default("My Campaign"),
-  campaignMode: z.enum(["managed_send", "link_per_recipient", "link_universal"]).default("link_per_recipient"),
+  campaignMode: z
+    .enum(["managed_send", "link_per_recipient", "link_universal"])
+    .default("link_per_recipient"),
   // Single recipient fields (fallback)
   recipientName: z.string().optional().default("Friend"),
   recipientEmail: z.string().email().optional().default("alex@example.com"),
@@ -175,7 +177,11 @@ export async function POST(request: Request): Promise<NextResponse> {
 </div>
   `.trim();
 
-  const pageHtmlToSave = sanitiseHtml(userCustomPageHtml && userCustomPageHtml.trim().length > 0 ? userCustomPageHtml : defaultLandingPageHtml);
+  const pageHtmlToSave = sanitiseHtml(
+    userCustomPageHtml && userCustomPageHtml.trim().length > 0
+      ? userCustomPageHtml
+      : defaultLandingPageHtml,
+  );
 
   // 2. Handle Mode C (Universal Broadcast Link)
   if (campaignMode === "link_universal") {
@@ -245,10 +251,10 @@ export async function POST(request: Request): Promise<NextResponse> {
       itemsToProcess.push({
         email: r.email.toLowerCase().trim(),
         first_name: r.first_name?.trim() || "Friend",
-        sex: r.sex?.trim() || (r.fields?.["sex"] || r.fields?.["gender"] || ""),
+        sex: r.sex?.trim() || r.fields?.["sex"] || r.fields?.["gender"] || "",
         fields: {
           ...(r.fields || {}),
-          sex: r.sex?.trim() || (r.fields?.["sex"] || r.fields?.["gender"] || ""),
+          sex: r.sex?.trim() || r.fields?.["sex"] || r.fields?.["gender"] || "",
           custom_message: message,
           company: orgName,
         },
@@ -344,15 +350,13 @@ export async function POST(request: Request): Promise<NextResponse> {
     const landingUrl = `${LINK_BASE_URL}/m/${rawToken}`;
 
     // 3. Create message row
-    await db
-      .insert(messages)
-      .values({
-        campaign_id: campaign.id,
-        recipient_id: rec.id,
-        token_hash: tokenHash,
-        status: dispatchViaPlatform ? "dispatched" : "pending",
-        sent_at: dispatchViaPlatform ? new Date() : null,
-      });
+    await db.insert(messages).values({
+      campaign_id: campaign.id,
+      recipient_id: rec.id,
+      token_hash: tokenHash,
+      status: dispatchViaPlatform ? "dispatched" : "pending",
+      sent_at: dispatchViaPlatform ? new Date() : null,
+    });
 
     // 4. Send via platform if requested
     if (dispatchViaPlatform && listmonkClient) {
@@ -367,22 +371,24 @@ export async function POST(request: Request): Promise<NextResponse> {
         const recipientSubject = render(subject, renderData);
         const recipientEmailHtml = render(emailHtmlTemplate, renderData);
 
-        await listmonkClient.sendTransactional({
-          subscriberEmail: item.email,
-          templateId: Number(process.env["LISTMONK_TX_TEMPLATE_ID"] ?? 1),
-          subject: recipientSubject,
-          contentType: "html",
-          data: {
-            content: recipientEmailHtml,
+        await listmonkClient
+          .sendTransactional({
+            subscriberEmail: item.email,
+            templateId: Number(process.env["LISTMONK_TX_TEMPLATE_ID"] ?? 1),
             subject: recipientSubject,
-            landing_link: landingUrl,
-            first_name: item.first_name,
-            sex: item.sex,
-          },
-        }).catch((err: unknown) => {
-          const errMsg = err instanceof Error ? err.message : String(err);
-          console.warn(`[quick-create] Send to ${item.email} encountered error:`, errMsg);
-        });
+            contentType: "html",
+            data: {
+              content: recipientEmailHtml,
+              subject: recipientSubject,
+              landing_link: landingUrl,
+              first_name: item.first_name,
+              sex: item.sex,
+            },
+          })
+          .catch((err: unknown) => {
+            const errMsg = err instanceof Error ? err.message : String(err);
+            console.warn(`[quick-create] Send to ${item.email} encountered error:`, errMsg);
+          });
       } catch (err) {
         console.warn(`[quick-create] Error dispatching to ${item.email}:`, err);
       }

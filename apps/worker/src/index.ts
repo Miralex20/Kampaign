@@ -18,13 +18,18 @@
 import { Worker, type Job } from "bullmq";
 import { Redis } from "ioredis";
 import { z } from "zod";
-import { getDb, messages, events, recipients, campaigns, suppressions, otp_codes } from "@campaign/db";
+import {
+  getDb,
+  messages,
+  events,
+  recipients,
+  campaigns,
+  suppressions,
+  otp_codes,
+} from "@campaign/db";
 import { eq, and, lt } from "drizzle-orm";
 import { decryptToken, loadEncryptionKey } from "@campaign/core/tokens";
-import {
-  createListmonkClient,
-  listmonkConfigFromEnv,
-} from "@campaign/core/listmonk";
+import { createListmonkClient, listmonkConfigFromEnv } from "@campaign/core/listmonk";
 
 const REDIS_URL = process.env["REDIS_URL"];
 if (!REDIS_URL) {
@@ -87,9 +92,7 @@ const worker = new Worker(
 
     // Idempotency: skip if already dispatched or beyond
     if (message.status !== "pending") {
-      console.log(
-        `[worker] Message ${messageId} already in status '${message.status}' — skipping`,
-      );
+      console.log(`[worker] Message ${messageId} already in status '${message.status}' — skipping`);
       return;
     }
 
@@ -122,20 +125,12 @@ const worker = new Worker(
     const [suppressed] = await db
       .select({ id: suppressions.id })
       .from(suppressions)
-      .where(
-        and(
-          eq(suppressions.org_id, campaign.org_id),
-          eq(suppressions.email, recipient.email),
-        ),
-      )
+      .where(and(eq(suppressions.org_id, campaign.org_id), eq(suppressions.email, recipient.email)))
       .limit(1);
 
     if (suppressed) {
       console.log(`[worker] ${recipient.email} suppressed — skipping message ${messageId}`);
-      await db
-        .update(messages)
-        .set({ status: "suppressed" })
-        .where(eq(messages.id, messageId));
+      await db.update(messages).set({ status: "suppressed" }).where(eq(messages.id, messageId));
       await db.insert(events).values({
         message_id: messageId,
         type: "suppressed",
@@ -188,10 +183,7 @@ const worker = new Worker(
 
       if (attempts >= MAX_ATTEMPTS) {
         await markFailed(messageId, String(err));
-        console.error(
-          `[worker] Message ${messageId} failed after ${attempts} attempts:`,
-          err,
-        );
+        console.error(`[worker] Message ${messageId} failed after ${attempts} attempts:`, err);
         return; // Don't throw — move to dead-letter implicitly
       }
 
@@ -228,10 +220,7 @@ const worker = new Worker(
 
 async function markFailed(messageId: string, reason: string): Promise<void> {
   const db = getDb();
-  await db
-    .update(messages)
-    .set({ status: "failed" })
-    .where(eq(messages.id, messageId));
+  await db.update(messages).set({ status: "failed" }).where(eq(messages.id, messageId));
   await db.insert(events).values({
     message_id: messageId,
     type: "failed",
@@ -297,4 +286,3 @@ process.on("SIGINT", () => void shutdown("SIGINT"));
 console.log(
   `[worker] Started. Queue: ${QUEUE_NAME}, concurrency: ${process.env["LISTMONK_DISPATCH_CONCURRENCY"] ?? 10}`,
 );
-

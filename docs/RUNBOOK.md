@@ -9,22 +9,24 @@ Operational procedures for the Campaign Messaging platform.
 
 1. [Local development setup](#1-local-development-setup)
 2. [CI / CD](#2-ci--cd)
-3. [Deploy](#3-deploy) *(M8)*
-4. [Rollback](#4-rollback) *(M8)*
-5. [Database backup and restore](#5-database-backup-and-restore) *(M8)*
-6. [Pause an org's sending](#6-pause-an-orgs-sending) *(M4)*
-7. [Handle a complaint spike](#7-handle-a-complaint-spike) *(M6)*
-8. [Rotate TOKEN_ENCRYPTION_KEY](#8-rotate-token_encryption_key) *(M8)*
+3. [Deploy](#3-deploy) _(M8)_
+4. [Rollback](#4-rollback) _(M8)_
+5. [Database backup and restore](#5-database-backup-and-restore) _(M8)_
+6. [Pause an org's sending](#6-pause-an-orgs-sending) _(M4)_
+7. [Handle a complaint spike](#7-handle-a-complaint-spike) _(M6)_
+8. [Rotate TOKEN_ENCRYPTION_KEY](#8-rotate-token_encryption_key) _(M8)_
 
 ---
 
 ## 1. Local development setup
 
 ### Prerequisites
+
 - Node.js ≥ 20, pnpm ≥ 9
 - Docker + Docker Compose
 
 ### Steps
+
 ```bash
 # 1. Clone and install
 pnpm install
@@ -46,21 +48,23 @@ pnpm --filter @campaign/worker start
 ```
 
 ### Service URLs
-| Service | URL |
-|---------|-----|
-| Web app | http://localhost:3000 |
-| Health check | http://localhost:3000/api/health |
-| listmonk | http://localhost:9000 |
-| Mailpit (email UI) | http://localhost:8025 |
-| Postgres | localhost:5432 |
-| PgBouncer | localhost:5433 |
-| Redis | localhost:6379 |
+
+| Service            | URL                              |
+| ------------------ | -------------------------------- |
+| Web app            | http://localhost:3000            |
+| Health check       | http://localhost:3000/api/health |
+| listmonk           | http://localhost:9000            |
+| Mailpit (email UI) | http://localhost:8025            |
+| Postgres           | localhost:5432                   |
+| PgBouncer          | localhost:5433                   |
+| Redis              | localhost:6379                   |
 
 ---
 
 ## 2. CI / CD
 
 GitHub Actions runs on every push and pull request:
+
 1. `pnpm install`
 2. `pnpm lint`
 3. `pnpm typecheck`
@@ -74,6 +78,7 @@ CI badge: see `.github/workflows/ci.yml`.
 ## 3. Deploy
 
 ### Production Deployment Steps
+
 1. **Database Migration**:
    ```bash
    pnpm --filter @campaign/db db:migrate
@@ -98,6 +103,7 @@ CI badge: see `.github/workflows/ci.yml`.
 ## 4. Rollback
 
 ### Application and Migration Rollback
+
 1. Revert application deployment to previous git commit / container image.
 2. If schema rollback is needed:
    ```bash
@@ -110,11 +116,13 @@ CI badge: see `.github/workflows/ci.yml`.
 ## 5. Database backup and restore
 
 ### Backup
+
 ```bash
 pg_dump -h localhost -p 5432 -U postgres -d campaign_messaging -F c -b -v -f backup_$(date +%Y%m%d_%H%M%S).dump
 ```
 
 ### Restore
+
 ```bash
 pg_restore -h localhost -p 5432 -U postgres -d campaign_messaging -v --clean backup_TIMESTAMP.dump
 ```
@@ -124,14 +132,17 @@ pg_restore -h localhost -p 5432 -U postgres -d campaign_messaging -v --clean bac
 ## 6. Pause an org's sending
 
 To immediately halt Mode A sending for a specific organization:
+
 ```sql
 UPDATE organizations
 SET review_state = 'suspended'
 WHERE id = '<ORG_UUID>';
 ```
+
 The BullMQ dispatch worker checks `organizations.review_state` and will skip jobs for suspended organizations.
 
 To resume:
+
 ```sql
 UPDATE organizations
 SET review_state = 'approved'
@@ -143,6 +154,7 @@ WHERE id = '<ORG_UUID>';
 ## 7. Handle a complaint spike
 
 When complaint rate exceeds 0.3% or hard-bounce rate exceeds 5%:
+
 1. The webhook handler automatically transitions the org's `review_state` to `suspended`.
 2. Inspect the complaint / bounce audit log:
    ```sql
@@ -164,6 +176,7 @@ When complaint rate exceeds 0.3% or hard-bounce rate exceeds 5%:
 ## 8. Rotate TOKEN_ENCRYPTION_KEY
 
 `TOKEN_ENCRYPTION_KEY` is a 32-byte (256-bit) base64-encoded key used to encrypt raw tokens while in BullMQ queues:
+
 1. Drain all pending jobs in BullMQ (or allow in-flight dispatch to complete).
 2. Generate a new 32-byte key:
    ```bash

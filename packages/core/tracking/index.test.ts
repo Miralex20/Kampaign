@@ -29,7 +29,9 @@ describe("isScannerUA", () => {
 
   it("returns false for a real Firefox browser UA", () => {
     expect(
-      isScannerUA("Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:124.0) Gecko/20100101 Firefox/124.0"),
+      isScannerUA(
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:124.0) Gecko/20100101 Firefox/124.0",
+      ),
     ).toBe(false);
   });
 
@@ -75,7 +77,9 @@ describe("isScanner (composite)", () => {
   const now = new Date();
 
   it("returns true when only UA matches", () => {
-    expect(isScanner({ userAgent: "Mimecast Scanner", deliveredAt: null, sentAt: null, requestAt: now })).toBe(true);
+    expect(
+      isScanner({ userAgent: "Mimecast Scanner", deliveredAt: null, sentAt: null, requestAt: now }),
+    ).toBe(true);
   });
 
   it("returns true when only timing matches", () => {

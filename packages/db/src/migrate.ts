@@ -37,10 +37,9 @@ async function migrate(): Promise<void> {
       .sort();
 
     for (const filename of files) {
-      const { rows } = await client.query(
-        "SELECT 1 FROM _migrations WHERE filename = $1",
-        [filename],
-      );
+      const { rows } = await client.query("SELECT 1 FROM _migrations WHERE filename = $1", [
+        filename,
+      ]);
       if (rows.length > 0) {
         console.log(`[migrate] already applied: ${filename}`);
         continue;
@@ -52,10 +51,7 @@ async function migrate(): Promise<void> {
       await client.query("BEGIN");
       try {
         await client.query(sql);
-        await client.query(
-          "INSERT INTO _migrations (filename) VALUES ($1)",
-          [filename],
-        );
+        await client.query("INSERT INTO _migrations (filename) VALUES ($1)", [filename]);
         await client.query("COMMIT");
         console.log(`[migrate] done: ${filename}`);
       } catch (err) {

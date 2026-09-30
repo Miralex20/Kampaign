@@ -12,10 +12,7 @@ import { requireSession } from "@/lib/session";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function POST(
-  _request: Request,
-  context: RouteContext,
-): Promise<NextResponse> {
+export async function POST(_request: Request, context: RouteContext): Promise<NextResponse> {
   let session: Awaited<ReturnType<typeof requireSession>>;
   try {
     session = await requireSession();
@@ -31,11 +28,7 @@ export async function POST(
   const { id: campaignId } = await context.params;
   const db = getDb();
 
-  const [campaign] = await db
-    .select()
-    .from(campaigns)
-    .where(eq(campaigns.id, campaignId))
-    .limit(1);
+  const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, campaignId)).limit(1);
 
   if (!campaign) {
     return NextResponse.json({ error: "Campaign not found" }, { status: 404 });

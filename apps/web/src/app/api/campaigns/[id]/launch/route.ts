@@ -45,10 +45,7 @@ function getQueue(): Queue {
   return _queue;
 }
 
-export async function POST(
-  _request: Request,
-  context: RouteContext,
-): Promise<NextResponse> {
+export async function POST(_request: Request, context: RouteContext): Promise<NextResponse> {
   let session: Awaited<ReturnType<typeof requireSession>>;
   try {
     session = await requireSession();
@@ -143,12 +140,7 @@ export async function POST(
       .select({ count: count() })
       .from(messages)
       .innerJoin(campaigns, eq(messages.campaign_id, campaigns.id))
-      .where(
-        and(
-          eq(campaigns.org_id, orgId),
-          sql`${messages.sent_at} >= ${todayStart}`,
-        ),
-      );
+      .where(and(eq(campaigns.org_id, orgId), sql`${messages.sent_at} >= ${todayStart}`));
 
     const dispatchedToday = sentToday?.count ?? 0;
     const remaining = Math.max(0, org.daily_cap - dispatchedToday);
@@ -204,17 +196,12 @@ async function launchPerRecipient(
     .where(eq(suppressions.org_id, orgId));
   const suppressedEmails = new Set(suppressedRows.map((r) => r.email.toLowerCase()));
 
-  const eligible = eligibleRecipients.filter(
-    (r) => !suppressedEmails.has(r.email.toLowerCase()),
-  );
+  const eligible = eligibleRecipients.filter((r) => !suppressedEmails.has(r.email.toLowerCase()));
 
   const batch = eligible.slice(0, Math.min(eligible.length, cap));
 
   if (batch.length === 0) {
-    return NextResponse.json(
-      { error: "No eligible recipients to dispatch" },
-      { status: 422 },
-    );
+    return NextResponse.json({ error: "No eligible recipients to dispatch" }, { status: 422 });
   }
 
   // Load encryption key (Mode A only — needed to encrypt tokens for BullMQ)
@@ -223,10 +210,7 @@ async function launchPerRecipient(
     try {
       encKey = loadEncryptionKey();
     } catch {
-      return NextResponse.json(
-        { error: "TOKEN_ENCRYPTION_KEY not configured" },
-        { status: 500 },
-      );
+      return NextResponse.json({ error: "TOKEN_ENCRYPTION_KEY not configured" }, { status: 500 });
     }
   }
 
@@ -243,12 +227,7 @@ async function launchPerRecipient(
       const existing = await tx
         .select({ id: messages.id, status: messages.status })
         .from(messages)
-        .where(
-          and(
-            eq(messages.campaign_id, campaignId),
-            eq(messages.recipient_id, recipient.id),
-          ),
-        )
+        .where(and(eq(messages.campaign_id, campaignId), eq(messages.recipient_id, recipient.id)))
         .limit(1);
 
       let messageId: string;
@@ -323,8 +302,7 @@ async function launchPerRecipient(
     const csvLines = [
       "email,first_name,landing_link",
       ...linkRows.map(
-        (r) =>
-          `"${r.email}","${(r.first_name ?? "").replace(/"/g, '""')}","${r.landing_link}"`,
+        (r) => `"${r.email}","${(r.first_name ?? "").replace(/"/g, '""')}","${r.landing_link}"`,
       ),
     ];
     const csvContent = csvLines.join("\n");

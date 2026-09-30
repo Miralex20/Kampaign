@@ -64,7 +64,9 @@ async function main() {
     }
 
     // 3. Create campaign_test_db
-    const testRes = await client.query("SELECT 1 FROM pg_database WHERE datname = 'campaign_test_db'");
+    const testRes = await client.query(
+      "SELECT 1 FROM pg_database WHERE datname = 'campaign_test_db'",
+    );
     if (testRes.rows.length === 0) {
       await client.query("CREATE DATABASE campaign_test_db OWNER campaign");
       console.log("[local-db] Created database 'campaign_test_db'");

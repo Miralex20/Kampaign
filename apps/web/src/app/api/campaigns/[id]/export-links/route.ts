@@ -20,10 +20,7 @@ import { join } from "node:path";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function POST(
-  _request: Request,
-  context: RouteContext,
-): Promise<NextResponse> {
+export async function POST(_request: Request, context: RouteContext): Promise<NextResponse> {
   let session: Awaited<ReturnType<typeof requireSession>>;
   try {
     session = await requireSession();
@@ -92,10 +89,7 @@ export async function POST(
         const rawToken = newToken();
         const th = hashToken(rawToken);
 
-        await tx
-          .update(messages)
-          .set({ token_hash: th })
-          .where(eq(messages.id, row.messageId));
+        await tx.update(messages).set({ token_hash: th }).where(eq(messages.id, row.messageId));
 
         linkRows.push({
           email: row.email,
@@ -117,8 +111,7 @@ export async function POST(
   const csvLines = [
     "email,first_name,landing_link",
     ...linkRows.map(
-      (r) =>
-        `"${r.email}","${(r.first_name ?? "").replace(/"/g, '""')}","${r.landing_link}"`,
+      (r) => `"${r.email}","${(r.first_name ?? "").replace(/"/g, '""')}","${r.landing_link}"`,
     ),
   ];
   const csvContent = csvLines.join("\n");
