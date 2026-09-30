@@ -25,6 +25,8 @@ import { eq } from "drizzle-orm";
 // one that bridges to our existing schema.
 import { DrizzleAdapter } from "./auth-adapter";
 
+import { createTransport } from "nodemailer";
+
 function isSuperadminEmail(email: string | null | undefined): boolean {
   if (!email) return false;
   const envEmails = process.env["SUPERADMIN_EMAILS"];
@@ -44,16 +46,52 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       server: {
         host: process.env["EMAIL_SERVER_HOST"] ?? "localhost",
         port: Number(process.env["EMAIL_SERVER_PORT"] ?? 1025),
-        ...(process.env["EMAIL_SERVER_USER"]
-          ? {
-              auth: {
-                user: process.env["EMAIL_SERVER_USER"] ?? "",
-                pass: process.env["EMAIL_SERVER_PASSWORD"] ?? "",
-              },
-            }
-          : {}),
       },
       from: process.env["EMAIL_FROM"] ?? "noreply@campaign.local",
+      async sendVerificationRequest({ identifier, url }) {
+        const { host } = new URL(url);
+        const transportConfig: any = {
+          host: process.env["EMAIL_SERVER_HOST"] ?? "localhost",
+          port: Number(process.env["EMAIL_SERVER_PORT"] ?? 1025),
+          secure: process.env["EMAIL_SERVER_SECURE"] === "true",
+          ignoreTLS: process.env["NODE_ENV"] !== "production",
+        };
+        if (process.env["EMAIL_SERVER_USER"]) {
+          transportConfig.auth = {
+            user: process.env["EMAIL_SERVER_USER"],
+            pass: process.env["EMAIL_SERVER_PASSWORD"] ?? "",
+          };
+        }
+        const transport = createTransport(transportConfig);
+        const from = process.env["EMAIL_FROM"] ?? "noreply@campaign.local";
+
+        await transport.sendMail({
+          to: identifier,
+          from,
+          subject: `Sign in to Kampaign (${host})`,
+          text: `Sign in to Kampaign\n\nClick the link below to sign in:\n${url}\n\nThis magic link will expire in 24 hours.`,
+          html: `
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 540px; margin: 40px auto; padding: 32px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; color: #0f172a;">
+  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 24px;">
+    <div style="width: 28px; height: 28px; background: #4f46e5; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #ffffff; font-weight: bold; font-size: 14px;">K</div>
+    <span style="font-size: 18px; font-weight: 700; color: #0f172a;">Kampaign</span>
+  </div>
+  <h2 style="font-size: 20px; font-weight: 700; margin: 0 0 12px 0;">Sign in to your workspace</h2>
+  <p style="font-size: 14px; color: #475569; line-height: 1.6; margin: 0 0 24px 0;">
+    Click the secure button below to authenticate into your Kampaign account. No password is required.
+  </p>
+  <div style="margin: 28px 0;">
+    <a href="${url}" style="display: inline-block; background: #4f46e5; color: #ffffff; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none;">
+      Sign In to Kampaign →
+    </a>
+  </div>
+  <p style="font-size: 12px; color: #94a3b8; line-height: 1.5; margin: 24px 0 0 0; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+    If you did not request this email, you can safely ignore it. This magic link expires in 24 hours.
+  </p>
+</div>
+          `.trim(),
+        });
+      },
     }) as any,
   ],
 
