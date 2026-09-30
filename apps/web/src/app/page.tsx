@@ -263,7 +263,7 @@ export default async function HomePage() {
           <CampaignStudio
             initialCampaigns={campaignList}
             recipientCount={recipientCount}
-            orgName={org?.name ?? "Acme Global Corp"}
+            orgName={org?.name ?? "My Workspace"}
             userEmail={session.user.email}
             initialSendingDomain={org?.sending_domain ?? null}
             initialDomainVerified={Boolean(org?.domain_verified_at)}
@@ -519,7 +519,7 @@ export default async function HomePage() {
               </div>
             </div>
 
-            {/* Architecture Highlights & Local Testing Guide */}
+            {/* Enterprise Security & Privacy Reassurance */}
             <div
               style={{
                 background: "#0f172a",
@@ -539,28 +539,28 @@ export default async function HomePage() {
                     display: "inline-block",
                     padding: "3px 8px",
                     borderRadius: "4px",
-                    background: "#334155",
+                    background: "#1e293b",
                     fontSize: "11px",
                     fontWeight: "600",
                     color: "#94a3b8",
                     marginBottom: "8px",
+                    border: "1px solid #334155",
                   }}
                 >
-                  LOCAL TESTBED READY
+                  ENTERPRISE PRIVACY & ISOLATION
                 </div>
                 <h3 style={{ margin: "0 0 8px 0", fontSize: "20px", fontWeight: "700" }}>
-                  Testing User Flows & Personas
+                  Ready to Deploy High-Stakes Messaging?
                 </h3>
                 <p style={{ margin: 0, color: "#94a3b8", fontSize: "14px", maxWidth: "600px" }}>
-                  Use the floating <strong>⚡ Dev Persona Switcher</strong> in the bottom right corner
-                  to switch between Superadmin, Org Owner, Editor, and Viewer personas at any time, or
-                  test real magic link dispatch with Mailpit.
+                  Zero raw tokens stored in databases, client-side cryptographic isolation, and
+                  authenticated single-use magic links ensure compliant delivery for critical communications.
                 </p>
               </div>
 
               <div style={{ display: "flex", gap: "10px" }}>
-                <a
-                  href="/api/auth/dev-login?email=admin@campaign.local&role=admin&redirect=/"
+                <Link
+                  href="/auth/signin"
                   style={{
                     fontSize: "13px",
                     fontWeight: "600",
@@ -571,8 +571,8 @@ export default async function HomePage() {
                     textDecoration: "none",
                   }}
                 >
-                  Enter as Superadmin →
-                </a>
+                  Get Started →
+                </Link>
               </div>
             </div>
           </div>

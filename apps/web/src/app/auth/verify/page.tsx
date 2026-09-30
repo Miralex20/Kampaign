@@ -14,21 +14,10 @@ export default function VerifyPage() {
             authentication — it expires in 10 minutes.
           </p>
 
-          {process.env.NODE_ENV !== "production" && (
-            <div className="mb-6 p-4 rounded-xl bg-slate-50 border border-slate-200 text-left text-xs text-slate-600">
-              <span className="font-semibold block mb-1">Local Testing Notice:</span>
-              Open Mailpit at{" "}
-              <a
-                href="http://localhost:8025"
-                target="_blank"
-                rel="noreferrer"
-                className="text-indigo-600 font-semibold underline"
-              >
-                http://localhost:8025
-              </a>{" "}
-              to click the newly dispatched magic link.
-            </div>
-          )}
+          <div className="mb-6 p-4 rounded-xl bg-slate-50 border border-slate-200 text-left text-xs text-slate-600">
+            <span className="font-semibold block mb-1">Didn&apos;t receive an email?</span>
+            Check your spam folder or ensure the email address you entered was correct. Magic links expire in 10 minutes.
+          </div>
 
           <Link
             href="/auth/signin"

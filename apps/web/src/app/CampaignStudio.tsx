@@ -54,15 +54,10 @@ export function CampaignStudio({
   const [mode, setMode] = useState<"personalized" | "broadcast">("personalized");
 
   // Campaign Meta
-  const [campaignName, setCampaignName] = useState("VIP Client Consultation & Update");
+  const [campaignName, setCampaignName] = useState("");
 
   // Contact list
-  const defaultRecipients: RecipientRow[] = [
-    { email: "alex.morgan@example.com", first_name: "Alex", sex: "Male" },
-    { email: "sarah.connor@example.com", first_name: "Sarah", sex: "Female" },
-    { email: "jamie.lee@example.com", first_name: "Jamie", sex: "Non-binary" },
-  ];
-  const [recipients, setRecipients] = useState<RecipientRow[]>(defaultRecipients);
+  const [recipients, setRecipients] = useState<RecipientRow[]>([]);
   const [csvRawText, setCsvRawText] = useState("");
   const [csvUploadFeedback, setCsvUploadFeedback] = useState<string | null>(null);
 
@@ -87,7 +82,7 @@ export function CampaignStudio({
   const [selectedPreviewIdx, setSelectedPreviewIdx] = useState(0);
 
   // Domain Verification State
-  const [sendingDomain, setSendingDomain] = useState(initialSendingDomain || "acmeglobal.com");
+  const [sendingDomain, setSendingDomain] = useState(initialSendingDomain || "");
   const [isDomainVerified, setIsDomainVerified] = useState(initialDomainVerified || false);
   const [showDomainModal, setShowDomainModal] = useState(false);
   const [verifyingDomain, setVerifyingDomain] = useState(false);
@@ -329,10 +324,10 @@ ${landingContent}
   }
 
   // Preview interpolation helper
-  const activeRecipient = recipients[selectedPreviewIdx] ||
+  const activeRecipient: RecipientRow = recipients[selectedPreviewIdx] ||
     recipients[0] || {
-      email: "visitor@example.com",
-      first_name: "Friend",
+      email: userEmail || "recipient@company.com",
+      first_name: "Recipient",
       sex: "Member",
     };
 
@@ -646,6 +641,7 @@ ${landingContent}
             </label>
             <input
               type="text"
+              placeholder="e.g. Q4 Executive Briefing & Client Update"
               value={campaignName}
               onChange={(e) => setCampaignName(e.target.value)}
               style={{
@@ -659,6 +655,9 @@ ${landingContent}
                 fontSize: "14px",
               }}
             />
+            <span style={{ display: "block", fontSize: "12px", color: "#64748b", marginTop: "4px" }}>
+              Internal campaign name used to organize reports, exports, and analytics.
+            </span>
           </div>
 
           {/* Contact List Importer (Only for Personalized Mode) */}
@@ -737,7 +736,12 @@ ${landingContent}
                     </button>
                     <button
                       type="button"
-                      onClick={() => setRecipients(defaultRecipients)}
+                      onClick={() => {
+                        setCsvRawText(
+                          "email,first_name,sex\njane.doe@company.com,Jane,Female\njohn.smith@company.com,John,Male",
+                        );
+                        setCsvUploadFeedback("✓ Inserted standard CSV template into input above.");
+                      }}
                       style={{
                         background: "#ffffff",
                         color: "#334155",
@@ -745,11 +749,33 @@ ${landingContent}
                         padding: "8px 14px",
                         borderRadius: "6px",
                         fontSize: "12px",
+                        fontWeight: "600",
                         cursor: "pointer",
                       }}
                     >
-                      Load Sample 3 Contacts
+                      Insert CSV Header Template
                     </button>
+                    {recipients.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRecipients([]);
+                          setCsvUploadFeedback("Audience cleared.");
+                        }}
+                        style={{
+                          background: "#ffffff",
+                          color: "#e11d48",
+                          border: "1px solid #fecdd3",
+                          padding: "8px 14px",
+                          borderRadius: "6px",
+                          fontSize: "12px",
+                          fontWeight: "600",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Clear Audience
+                      </button>
+                    )}
                   </div>
                   {csvUploadFeedback && (
                     <div
@@ -873,31 +899,52 @@ ${landingContent}
                       </tr>
                     </thead>
                     <tbody>
-                      {recipients.map((r, i) => (
-                        <tr key={i} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                          <td style={{ padding: "9px 16px", color: "#94a3b8" }}>{i + 1}</td>
-                          <td style={{ padding: "9px 16px", fontWeight: "600", color: "#0f172a" }}>
-                            {r.email}
-                          </td>
-                          <td style={{ padding: "9px 16px", color: "#334155" }}>
-                            {r.first_name || "—"}
-                          </td>
-                          <td style={{ padding: "9px 16px" }}>
-                            <span
-                              style={{
-                                background: "#f1f5f9",
-                                padding: "2px 8px",
-                                borderRadius: "4px",
-                                color: "#475569",
-                                fontSize: "12px",
-                                border: "1px solid #e2e8f0",
-                              }}
-                            >
-                              {r.sex || "Default"}
-                            </span>
+                      {recipients.length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan={4}
+                            style={{
+                              padding: "36px 16px",
+                              textAlign: "center",
+                              color: "#64748b",
+                            }}
+                          >
+                            <div style={{ fontSize: "28px", marginBottom: "6px" }}>👥</div>
+                            <div style={{ fontWeight: "600", fontSize: "14px", color: "#0f172a" }}>
+                              No recipients loaded yet
+                            </div>
+                            <p style={{ margin: "4px 0 0 0", fontSize: "12px", color: "#64748b" }}>
+                              Upload a CSV file or paste contact rows above with columns: <code style={{ background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px" }}>email,first_name,sex</code>
+                            </p>
                           </td>
                         </tr>
-                      ))}
+                      ) : (
+                        recipients.map((r, i) => (
+                          <tr key={i} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                            <td style={{ padding: "9px 16px", color: "#94a3b8" }}>{i + 1}</td>
+                            <td style={{ padding: "9px 16px", fontWeight: "600", color: "#0f172a" }}>
+                              {r.email}
+                            </td>
+                            <td style={{ padding: "9px 16px", color: "#334155" }}>
+                              {r.first_name || "—"}
+                            </td>
+                            <td style={{ padding: "9px 16px" }}>
+                              <span
+                                style={{
+                                  background: "#f1f5f9",
+                                  padding: "2px 8px",
+                                  borderRadius: "4px",
+                                  color: "#475569",
+                                  fontSize: "12px",
+                                  border: "1px solid #e2e8f0",
+                                }}
+                              >
+                                {r.sex || "Default"}
+                              </span>
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -1350,7 +1397,7 @@ ${landingContent}
             </div>
 
             {/* Recipient switcher */}
-            {mode === "personalized" && recipients.length > 0 && (
+            {mode === "personalized" && recipients.length > 0 ? (
               <div
                 style={{
                   display: "flex",
@@ -1381,6 +1428,24 @@ ${landingContent}
                     </option>
                   ))}
                 </select>
+              </div>
+            ) : mode === "personalized" && (
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  background: "#eff6ff",
+                  border: "1px solid #bfdbfe",
+                  color: "#1e40af",
+                  fontSize: "12px",
+                  padding: "6px 12px",
+                  borderRadius: "6px",
+                  fontWeight: "500",
+                }}
+              >
+                <span>ℹ️</span>
+                <span>Displaying sample tags. Add recipients in Step 1 to test live variables.</span>
               </div>
             )}
 

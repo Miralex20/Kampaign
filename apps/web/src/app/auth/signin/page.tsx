@@ -55,25 +55,13 @@ export default function SignInPage() {
             </button>
           </form>
 
-          {/* Dev Helper */}
-          {process.env.NODE_ENV !== "production" && (
-            <div className="mt-6 pt-6 border-t border-slate-100">
-              <div className="text-xs text-slate-500 mb-2 font-medium">
-                ⚡ Development Environment:
-              </div>
-              <div className="text-xs text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-200">
-                Magic link emails sent locally are trapped in Mailpit at{" "}
-                <a
-                  href="http://localhost:8025"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-indigo-600 font-semibold underline"
-                >
-                  localhost:8025
-                </a>
-              </div>
-            </div>
-          )}
+          {/* Helper / Security Notice */}
+          <div className="mt-6 pt-6 border-t border-slate-100 flex items-start gap-2.5 text-xs text-slate-500">
+            <span className="text-sm">🔒</span>
+            <p className="leading-relaxed m-0">
+              We use secure, passwordless authentication. A one-time sign-in link will be dispatched to your company inbox.
+            </p>
+          </div>
         </div>
 
         {/* Back Link */}

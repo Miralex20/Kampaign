@@ -508,8 +508,13 @@ export default function TeamManagementPage() {
 
                 {/* Granular Capabilities */}
                 <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-2.5">
-                  <div className="text-xs font-bold text-slate-700 uppercase">
-                    Granular Capabilities
+                  <div>
+                    <div className="text-xs font-bold text-slate-700 uppercase">
+                      Granular Capabilities
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Presets set recommended defaults; customize specific privileges below.
+                    </p>
                   </div>
                   <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
                     <input
