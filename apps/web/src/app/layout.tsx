@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DevPersonaSwitcher } from "@/components/DevPersonaSwitcher";
 
 export const metadata: Metadata = {
   title: "Campaign Messaging",
@@ -8,7 +9,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <DevPersonaSwitcher />
+      </body>
     </html>
   );
 }
